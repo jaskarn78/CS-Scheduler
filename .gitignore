@@ -1,0 +1,7 @@
+build
+node_modules
+/cs-class-scheduler-frontend/public
+.env
+.vscode
+index-old.js
+cs-sessions.chlz
