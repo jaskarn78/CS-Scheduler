@@ -4,9 +4,9 @@ const { CLIENT, RESERVE_TYPE } = require("../config/config");
 
 const getSpotBookingData = async (req, res) => {
     const { classScheduleId, classDate } = req.body;
+
     const requestData = {
-        request: { Value: { ClassScheduleId: classScheduleId, ClassDate: classDate } },
-        Client: CLIENT
+        request: { Value: { ClassScheduleId: classScheduleId, ClassDate: classDate }, Client: CLIENT },
     };
 
     try {

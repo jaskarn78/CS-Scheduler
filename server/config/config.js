@@ -2,8 +2,8 @@
 module.exports = {
     API_BASE_URL: 'https://publicapi.lafitness.com/LAF_S4.7.15/Services',
     AUTH_CREDENTIALS: {
-        username: 'USERNAME',
-        password: 'PASSWORD'
+        username: 'jjagpal101',
+        password: 'rdj7pvp1jwy5xgv.GJN'
     },
     CLUB_ID: 1390,
     RESERVE_TYPE: 2,

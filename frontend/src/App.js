@@ -3,10 +3,12 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Profile from "./components/Profile";
 import Classes from "./components/Classes";
 import UpcomingClassesPage from "./components/Scheduler";
+import Navbar from "./components/Navbar";
 
 function App() {
   return (
       <Router>
+	 <Navbar />
           <div className="app-container">
               <h1>Club Studio Dashboard</h1>
               <Routes>
