@@ -4,17 +4,17 @@ const { API_BASE_URL, AUTH_CREDENTIALS, CLIENT } = require("../config/config");
 
 let authToken = null;
 
-const generateAuthorizationHeader = () => {
-    const encoded = Buffer.from(`${AUTH_CREDENTIALS.username}:${AUTH_CREDENTIALS.password}`).toString("base64");
+const generateAuthorizationHeader = (username,password) => {
+    const encoded = Buffer.from(`${username}:${password}`).toString("base64");
     return `Basic ${encoded}`;
 };
 
-const authenticate = async () => {
+const authenticate = async (credentials) => {
     const requestData = {
         request: {
             Value: {
-                Password: AUTH_CREDENTIALS.password,
-                Username: AUTH_CREDENTIALS.username
+                Password: credentials.password,
+                Username: credentials.username,
             },
             Client: CLIENT
         }

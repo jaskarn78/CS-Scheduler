@@ -4,7 +4,7 @@ const { getFutureClassReservations, getClassesByClub } = require("../controllers
 
 const router = express.Router();
 
-router.get("/reservations", getFutureClassReservations);
+router.post("/reservations", getFutureClassReservations);
 router.post("/classes-by-club", getClassesByClub);
 
 module.exports = router;
