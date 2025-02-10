@@ -1,96 +1,72 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-const Navbar = () => {
+const Navbar = ({ setToken }) => {
     const [menuOpen, setMenuOpen] = useState(false);
+    const navigate = useNavigate();
 
     const toggleMenu = () => {
         setMenuOpen(!menuOpen);
     };
 
+    // Logout function
+    const handleLogout = () => {
+        localStorage.removeItem("token"); // Remove token
+        localStorage.removeItem("authHeader"); // Remove auth header
+        localStorage.removeItem("barCode");
+        setToken(null); // Update state to force logout
+        navigate("/login"); // Redirect to login page
+    };
+
     return (
-        <nav style={styles.navbar}>
-            <div style={styles.navContainer}>
-                <h1 style={styles.brand}>CS Scheduler</h1>
-                <button style={styles.menuButton} onClick={toggleMenu}>
-                    ☰
-                </button>
-                <ul style={{ ...styles.navLinks, display: menuOpen ? "flex" : "none" }}>
-                    <li><Link to="/" style={styles.navItem}>Home</Link></li>
-                    <li><Link to="/upcoming-classes" style={styles.navItem}>Schedule</Link></li>
-                </ul>
+        <nav className="navigation bg-black text-white shadow-md fixed top-0 w-full z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16">
+                    <h1 className="text-2xl font-bold">Club Studio Scheduler</h1>
+                    <div className="lg:hidden">
+                        <button
+                            onClick={toggleMenu}
+                            className="text-white text-3xl focus:outline-none"
+                        >
+                            ☰
+                        </button>
+                    </div>
+                    <ul
+                        className={`${
+                            menuOpen ? "block" : "hidden"
+                        } absolute lg:static lg:flex lg:gap-6 w-full lg:w-auto top-16 lg:top-0 left-0 lg:left-auto text-center lg:text-left lg:p-0`}
+                    >
+                        <li>
+                            <Link
+                                to="/"
+                                className="block py-2 px-4 text-lg text-white hover:text-gray-300 lg:inline"
+                                onClick={() => setMenuOpen(false)}
+                            >
+                                My Classes
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                to="/upcoming-classes"
+                                className="block py-2 px-4 text-lg text-white hover:text-gray-300 lg:inline"
+                                onClick={() => setMenuOpen(false)}
+                            >
+                                Schedule
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                onClick={handleLogout}
+                                className="block py-2 px-4 text-lg text-red-500 hover:text-red-300 lg:inline"
+                            >
+                                Logout
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </nav>
     );
 };
-
-// CSS Styling
-const styles = {
-    navbar: {
-        backgroundColor: "#007bff",
-        padding: "10px 20px",
-        position: "fixed",
-        top: 0,
-        width: "100%",
-        zIndex: 1000,
-    },
-    navContainer: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        maxWidth: "900px",
-        margin: "0 auto",
-    },
-    brand: {
-        color: "#fff",
-        fontSize: "20px",
-    },
-    menuButton: {
-        backgroundColor: "transparent",
-        color: "#fff",
-        fontSize: "24px",
-        border: "none",
-        cursor: "pointer",
-        display: "none", // Will be shown in mobile
-    },
-    navLinks: {
-        listStyle: "none",
-        padding: 0,
-        display: "flex",
-        gap: "20px",
-    },
-    navItem: {
-        color: "#fff",
-        textDecoration: "none",
-        fontSize: "16px",
-    },
-};
-
-// Mobile Responsive Styles
-const mobileStyles = `
-    @media (max-width: 768px) {
-        .menuButton {
-            display: block !important;
-        }
-        .navLinks {
-            flex-direction: column !important;
-            background: #007bff;
-            position: absolute;
-            top: 50px;
-            right: 0;
-            width: 100%;
-            text-align: center;
-            padding: 10px 0;
-        }
-        .navLinks li {
-            padding: 10px 0;
-        }
-    }
-`;
-
-const styleSheet = document.createElement("style");
-styleSheet.type = "text/css";
-styleSheet.innerText = mobileStyles;
-document.head.appendChild(styleSheet);
 
 export default Navbar;

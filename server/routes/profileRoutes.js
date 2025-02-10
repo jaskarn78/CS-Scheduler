@@ -4,6 +4,6 @@ const { getCustomerProfile } = require("../controllers/profileController");
 
 const router = express.Router();
 
-router.get("/my-profile", getCustomerProfile);
+router.post("/my-profile", getCustomerProfile);
 
 module.exports = router;
