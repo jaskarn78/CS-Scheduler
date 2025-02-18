@@ -1,6 +1,6 @@
 const dayjs = require("dayjs");
 const pool = require("../db/mysql");
-const {sendAppriseNotification, sendEmailNotification} = require("../utils/notificationUtils");
+const {sendAppriseNotification, sendEmailNotification} = require("../services/notificationService");
 const {generateEmailTemplate} = require("../utils/emailTemplates");
 const {convertTo12HourFormat} = require("../utils/dateTimeUtils");
 const {
