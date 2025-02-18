@@ -26,9 +26,9 @@ const callLAFitnessAPI = async (endpoint, data) => {
         });
         return response.data;
     } catch (error) {
-        return error;
-        // console.error(`Error calling ${endpoint}:`, error.response?.data || error.message);
-        // throw error;
+       
+        console.error(`Error calling ${endpoint}:`, error.response?.data || error.message);
+        throw error;
     }
 };
 

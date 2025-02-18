@@ -1,25 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { getUpcomingClasses, getBookingSpot, reserveSpot, addToWaitList } from "../api";
+import { classIcons, getClassCategory } from "../utils/classIconUtils";
+
 
 const UpcomingClassesPage = () => {
     const [selectedDate, setSelectedDate] = useState("");
     const [classes, setClasses] = useState([]);
+    const [filteredClasses, setFilteredClasses] = useState([]);
     const [error, setError] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState(null);
     const [availableSpots, setAvailableSpots] = useState([]);
     const [selectedSpot, setSelectedSpot] = useState("");
-    const [roomName, setRoomName] = useState("");
+    const [selectedClassType, setSelectedClassType] = useState("All");
 
-    const handleDateChange = (event) => {
-        setSelectedDate(event.target.value);
-    };
+    useEffect(() => {
+        setFilteredClasses(
+            selectedClassType === "All" ? classes : classes.filter((cls) => cls.className === selectedClassType)
+        );
+    }, [selectedClassType, classes]);
+
+    const handleDateChange = (event) => setSelectedDate(event.target.value);
 
     const fetchClasses = async () => {
         try {
             const response = await getUpcomingClasses(selectedDate);
             if (response.Success) {
-                setClasses(response.Value); // Use backend-provided data directly
+                setClasses(response.Value);
                 setError("");
             } else {
                 setError("Failed to fetch classes. Please try again.");
@@ -38,8 +45,6 @@ const UpcomingClassesPage = () => {
                 classTime: classItem.START_TIME,
                 instructor: classItem.InstructorName,
                 description: classItem.classDesc,
-                category: classItem.category,
-                rules: classItem.brandGuideLines,
                 waitlisted: true,
             });
             setIsModalOpen(true);
@@ -47,40 +52,29 @@ const UpcomingClassesPage = () => {
             try {
                 const response = await getBookingSpot(classItem.CLASS_SCHEDULES_ID, classItem.START_TIME);
                 if (response.Success) {
-                    const availableSpotNumbers = response.Value.Items.filter(
-                        (spot) => spot.Available && parseInt(spot.Text, 10) !== -1
-                    )
-                        .map((spot) => spot)
+                    const availableSpotNumbers = response.Value.Items
+                        .filter((spot) => spot.Available && parseInt(spot.Text, 10) > 0)
                         .sort((a, b) => parseInt(a.Text) - parseInt(b.Text));
 
                     setAvailableSpots(availableSpotNumbers);
-                    setRoomName(response.Value.RoomLayout.RoomName || "Unknown Room");
-
                     setModalContent({
                         classType: classItem.className,
                         classScheduleId: classItem.CLASS_SCHEDULES_ID,
                         classTime: classItem.START_TIME,
                         instructor: classItem.InstructorName,
                         description: classItem.classDesc,
-                        category: classItem.category,
-                        rules: classItem.brandGuideLines,
-                        roomName: response.Value.RoomLayout.RoomName,
                         waitlisted: false,
                     });
 
-                    setSelectedSpot(""); // Reset selected spot
+                    setSelectedSpot("");
                     setIsModalOpen(true);
                 } else {
-                    setModalContent({
-                        error: "Failed to load booking spot details.",
-                    });
+                    setModalContent({ error: "Failed to load booking spot details." });
                     setIsModalOpen(true);
                 }
             } catch (err) {
                 console.error("Error fetching booking spot details:", err);
-                setModalContent({
-                    error: "An error occurred while fetching spot details.",
-                });
+                setModalContent({ error: "An error occurred while fetching spot details." });
                 setIsModalOpen(true);
             }
         }
@@ -92,23 +86,17 @@ const UpcomingClassesPage = () => {
         setAvailableSpots([]);
     };
 
-    const handleSpotChange = (event) => {
-        setSelectedSpot(event.target.value);
-    };
+    const handleSpotChange = (event) => setSelectedSpot(event.target.value);
 
-    const handleBookClass = async (spotId, startTime, classScheduleId) => {
-        if (!spotId) {
-            alert("Please select a spot to book the class.");
-            return;
-        }
+    const handleBookClass = async () => {
+        if (!selectedSpot) return alert("Please select a spot to book the class.");
 
         try {
-            const response = await reserveSpot(classScheduleId, startTime, spotId);
-
+            const response = await reserveSpot(modalContent.classScheduleId, modalContent.classTime, selectedSpot);
             if (response.Success) {
                 alert(response.Message || "Class booked successfully!");
                 closeModal();
-                window.location.reload();
+                //window.location.reload();
             } else {
                 alert("Failed to book the class. Please try again.");
             }
@@ -118,9 +106,9 @@ const UpcomingClassesPage = () => {
         }
     };
 
-    const handleAddToWaitlist = async (classScheduleId, classTime) => {
+    const handleAddToWaitlist = async () => {
         try {
-            const response = await addToWaitList(classScheduleId, classTime);
+            const response = await addToWaitList(modalContent.classScheduleId, modalContent.classTime);
             if (response.Success) {
                 alert(response.Message || "Successfully added to the waitlist!");
                 closeModal();
@@ -135,211 +123,131 @@ const UpcomingClassesPage = () => {
     };
 
     return (
-        <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
-            <h1 style={{ textAlign: "center", color: "#007bff" }}>Upcoming Classes</h1>
-            <label htmlFor="date-picker">Select a Date:</label>
-            <input
-                id="date-picker"
-                type="date"
-                value={selectedDate}
-                onChange={handleDateChange}
-                style={{
-                    marginLeft: "10px",
-                    padding: "5px",
-                    fontSize: "16px",
-                }}
-            />
-            <button
-                onClick={fetchClasses}
-                style={{
-                    marginLeft: "10px",
-                    padding: "5px 10px",
-                    fontSize: "16px",
-                    backgroundColor: "#007bff",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                }}
-                disabled={!selectedDate}
-            >
-                Get Classes
-            </button>
+        <div className="p-6 max-w-4xl mx-auto">
+            <h1 className="text-center text-3xl font-semibold text-gray-900">Upcoming Classes</h1>
 
-            {error && <p style={{ color: "red", marginTop: "20px" }}>{error}</p>}
+            <div className="flex flex-wrap gap-4 mt-6 justify-center">
+                <input type="date" value={selectedDate} onChange={handleDateChange} className="border p-3 rounded-lg w-48" />
+                <button
+                    onClick={fetchClasses}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+                    disabled={!selectedDate}
+                >
+                    Get Classes
+                </button>
+                <select
+                    className="border p-3 rounded-lg"
+                    value={selectedClassType}
+                    onChange={(e) => setSelectedClassType(e.target.value)}
+                >
+                    <option value="All">All Classes</option>
+                    {[...new Set(classes.map((cls) => cls.className))].map((className) => (
+                        <option key={className} value={className}>
+                            {className}
+                        </option>
+                    ))}
+                </select>
+            </div>
 
-            <div style={{ marginTop: "20px" }}>
-                {classes.length > 0 ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-                        {classes.map((classItem) => (
+            {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
+
+            <div className="mt-6 space-y-4">
+                {filteredClasses.length > 0 ? (
+                    filteredClasses.map((classItem) => {
+                        const classCategory = getClassCategory(classItem.className);
+                        const classIcon = classIcons[classCategory];
+
+                        return (
                             <div
                                 key={classItem.CLASS_SCHEDULES_ID}
-                                onClick={() => handleCardClick(classItem)}
-                                style={{
-                                    border: "1px solid #ddd",
-                                    borderRadius: "8px",
-                                    padding: "15px",
-                                    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-                                    backgroundColor: "#fff",
-                                    cursor: "pointer",
-                                }}
+                                className="border rounded-lg p-4 shadow-md bg-white cursor-pointer hover:shadow-lg transition"
                             >
-                                <h2 style={{ margin: "0 0 10px", color: "#007bff" }}>{classItem.className}</h2>
-                                <div className='line-item'>
-                                    <strong>Instructor:</strong> {classItem.InstructorTitle} {classItem.InstructorName}
+                                {/* Class Name with Icon */}
+                                <div className="flex items-center gap-3">
+                                    {classIcon}
+                                    <h2 className="text-xl font-semibold text-gray-800">{classItem.className}</h2>
                                 </div>
-                                <div className='line-item'>
-                                    <strong>Class Status:</strong> {classItem.classStatusLabel}
+                                <p className="text-gray-600"><strong>Instructor:</strong> {classItem.InstructorName}</p>
+                                <p className="text-gray-600"><strong>Class Time:</strong> {classItem.START_TIME}</p>
+                                <p className="text-gray-600"><strong>Status:</strong> {classItem.classStatusLabel === "Book" ? "Open" : classItem.classStatusLabel}</p>
+
+                                <div className="flex flex-wrap gap-3 mt-4">
+                                    {classItem.classStatusLabel === "Edit" ? (
+                                        <button className="bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed">
+                                            Already Scheduled
+                                        </button>
+                                    ) : classItem.classStatusLabel.includes("Waitlist") ? (
+                                        <button
+                                            onClick={() => handleCardClick(classItem)}
+                                            className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition"
+                                        >
+                                            Join Waitlist
+                                        </button>
+                                    ) : classItem.classStatusLabel === "Book" ? (
+                                        <button
+                                            onClick={() => handleCardClick(classItem)}
+                                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+                                        >
+                                            Book Now
+                                        </button>
+                                    ) : (
+                                        <button className="bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed">
+                                            {classItem.classStatusDesc}
+                                        </button>
+                                    )}
                                 </div>
-                                <div className='line-item'>
-                                    <strong>Class Time:</strong> {classItem.START_TIME}
-                                </div>
-                                {classItem.classStatusLabel !== "Waitlist" && (
-                                    <div className='line-item'>
-                                        <strong>Available Spots:</strong> {classItem.extra.AvailableCapacity}
-                                    </div>
-                                )}
                             </div>
-                        ))}
-                    </div>
+                        );
+                    })
                 ) : (
-                    <p style={{ textAlign: "center", color: "#666" }}>
-                        No classes available for the selected date.
-                    </p>
+                    <p className="text-center text-gray-500">No classes available for the selected date.</p>
                 )}
             </div>
 
-            {isModalOpen && (
-    <div
-        style={{
-            position: "fixed",
-            top: "0",
-            left: "0",
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-        }}
-    >
-        <div
-            style={{
-                backgroundColor: "#fff",
-                padding: "20px",
-                borderRadius: "8px",
-                width: "400px",
-                textAlign: "center",
-            }}
-        >
-            {modalContent ? (
-                <>
-                    <div className='hdr'>{modalContent.classType} </div>
-                    <div className='line-item'>
-                        {/* <strong>Room:</strong> {roomName != "" ? } */}
-                    </div>
-                    <div className='line-item'>
-                        <strong>Instructor:</strong> {modalContent.instructor}
-                    </div>
-                    <div className='line-item'>
-                        <strong>Class Time:</strong> {modalContent.classTime}
-                    </div>
-                    <div className='line-item'>
-                        <strong>Description:</strong>{modalContent.description}
-                    </div>
+            {isModalOpen && modalContent && (
+                <div className="fixed inset-0 bg-black bg-opacity-25 flex justify-center items-center">
+                    <div className="bg-white p-6 rounded-lg w-96 shadow-xl">
+                        {/* Modal Header with Icon */}
+                        <div className="flex items-center gap-3">
+                            {classIcons[getClassCategory(modalContent.classType)]}
+                            <h2 className="text-2xl font-bold text-gray-800">{modalContent.classType}</h2>
+                        </div>
 
-                    {!modalContent.waitlisted && (
-                        <>
-                            <label htmlFor="spot-selector">
-                                <strong>Select a Spot:</strong>
-                            </label>
-                            <select
-                                id="spot-selector"
-                                value={selectedSpot}
-                                onChange={handleSpotChange}
-                                style={{
-                                    margin: "10px 0",
-                                    padding: "5px",
-                                    fontSize: "16px",
-                                    width: "100%",
-                                }}
-                            >
-                                <option value="">Select a Spot</option>
-                                {availableSpots.map((spot, index) => (
-                                    <option key={index} value={spot.Id}>
-                                        {spot.Text}
-                                    </option>
-                                ))}
-                            </select>
-                        </>
-                    )}
-                    <div
-                        style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            marginTop: "20px",
-                            width: "100%",
-                        }}
-                    >
-                        <button
-                            onClick={closeModal}
-                            style={{
-                                padding: "10px 20px",
-                                backgroundColor: "#f44336", // Red for Close
-                                color: "#fff",
-                                border: "none",
-                                borderRadius: "5px",
-                                cursor: "pointer",
-                            }}
-                        >
-                            Close
-                        </button>
-                        {modalContent.waitlisted ? (
-                            <button
-                                onClick={() =>
-                                    handleAddToWaitlist(modalContent.classScheduleId, modalContent.classTime)
-                                }
-                                style={{
-                                    padding: "10px 20px",
-                                    backgroundColor: "#4CAF50", // Green for Waitlist
-                                    color: "#fff",
-                                    border: "none",
-                                    borderRadius: "5px",
-                                    cursor: "pointer",
-                                }}
-                            >
-                                Waitlist
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() =>
-                                    handleBookClass(
-                                        selectedSpot,
-                                        modalContent.classTime,
-                                        modalContent.classScheduleId
-                                    )
-                                }
-                                style={{
-                                    padding: "10px 20px",
-                                    backgroundColor: "#4CAF50", // Green for Book
-                                    color: "#fff",
-                                    border: "none",
-                                    borderRadius: "5px",
-                                    cursor: "pointer",
-                                }}
-                                disabled={!selectedSpot}
-                            >
-                                Book
-                            </button>
+                        <p className="text-gray-700"><strong>Instructor:</strong> {modalContent.instructor}</p>
+                        <p className="text-gray-700"><strong>Class Time:</strong> {modalContent.classTime}</p>
+                        <p className="text-gray-700"><strong>Description:</strong> {modalContent.description}</p>
+
+                        {!modalContent.waitlisted && (
+                            <div className="mt-4">
+                                <label className="block text-gray-700 font-medium">Select a Spot:</label>
+                                <select
+                                    value={selectedSpot}
+                                    onChange={handleSpotChange}
+                                    className="w-full border p-2 rounded-lg mt-2"
+                                >
+                                    <option value="">Select a Spot</option>
+                                    {availableSpots.map((spot) => (
+                                        <option key={spot.Id} value={spot.Id}>{spot.Text}</option>
+                                    ))}
+                                </select>
+                            </div>
                         )}
+
+                        <div className="flex justify-between mt-6">
+                            <button onClick={closeModal} className="bg-red-500 text-white px-4 py-2 rounded-lg">Close</button>
+                            {modalContent.waitlisted ? (
+                                <button onClick={handleAddToWaitlist} className="bg-yellow-500 text-white px-4 py-2 rounded-lg">
+                                    Waitlist
+                                </button>
+                            ) : (
+                                <button onClick={handleBookClass} className="bg-green-500 text-white px-4 py-2 rounded-lg">
+                                    Book
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </>
-            ) : (
-                <p>Loading...</p>
+                </div>
             )}
-        </div>
-    </div>
-)}
         </div>
     );
 };
