@@ -1,140 +1,178 @@
-# CS-Scheduler
+# Club Studio Scheduler
 
 ## Overview
-CS-Scheduler is a Node.js and React application designed to manage and display upcoming fitness classes by interacting with the LA Fitness API. It allows users to view their profiles, schedule classes, and see details about class types, availability, and instructors.
+Club Studio Scheduler is an automated class booking system for Club Studio fitness classes. This system allows users to:
+- **Automate class bookings** for their preferred schedule.
+- **Manually book classes** and add them to their calendar.
+- **Manage personal preferences**, including selected classes, times, and days.
+- **Join waitlists** automatically when classes are full.
+- **Receive notifications** via email or Pushover (Apprise integration).
 
-## Features
-- Fetch and display user profile data.
-- Fetch and display upcoming classes with detailed information.
-- Categorize classes based on `UiCategoryId` and `RoomTemplateID`.
-- Dynamic updating of credentials via environment variables.
-
-## Installation
-
-### Prerequisites
-- Node.js (v14 or later)
-- npm (v6 or later)
-- A GitHub account
-
-### Clone the Repository
-```bash
-git clone https://github.com/jaskarn78/CS-Scheduler.git
-cd CS-Scheduler
-```
-
-### Backend Setup
-1. Navigate to the `server` directory:
-   ```bash
-   cd server
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file in the `server` directory and add the following:
-   ```plaintext
-   AUTH_USERNAME=your_username
-   AUTH_PASSWORD=your_password
-   ```
-   Replace `your_username` and `your_password` with your API credentials.
-
-4. Run the server:
-   ```bash
-   node index.js
-   ```
-
-### Frontend Setup
-1. Navigate to the `cs-class-scheduler-frontend` directory:
-   ```bash
-   cd cs-class-scheduler-frontend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm start
-   ```
-   By default, the app runs on `http://localhost:3000`.
-
-## Dynamic Credentials Configuration
-To securely handle API credentials, the application uses environment variables. Follow these steps:
-
-1. Install the `dotenv` package in the backend:
-   ```bash
-   npm install dotenv
-   ```
-2. Ensure the `.env` file is created in the `server` directory with the following content:
-   ```plaintext
-   AUTH_USERNAME=your_username
-   AUTH_PASSWORD=your_password
-   ```
-3. Update the `config.js` file in the `server/config` directory to include:
-   ```javascript
-   module.exports = {
-       API_BASE_URL: 'https://publicapi.lafitness.com/LAF_S4.7.15/Services',
-       AUTH_CREDENTIALS: {
-           username: process.env.AUTH_USERNAME || 'default_username',
-           password: process.env.AUTH_PASSWORD || 'default_password',
-       },
-       CLIENT: {
-           Version: '1.3.6.5',
-           VariantId: '744',
-           Platform: 'iOS',
-           OSVersion: '18.3',
-           DeviceID: 'DEVICE_ID',
-           MacAddress: '02:00:00:00:00:00',
-           Model: 'iPhone17,1',
-       },
-   };
-   ```
-4. Ensure the following line is added to the top of your `index.js` file to load the `.env` file:
-   ```javascript
-   require('dotenv').config();
-   ```
-
-## Building and Serving the App
-1. Build the React frontend:
-   ```bash
-   cd cs-class-scheduler-frontend
-   npm run build
-   ```
-   This generates a `build` folder with the production-ready app.
-
-2. Serve the React app from the Node.js backend:
-   - Ensure the `build` folder is copied to the `server` directory.
-   - Update the `index.js` file in the `server` directory:
-     ```javascript
-     const express = require('express');
-     const path = require('path');
-     const app = express();
-
-     app.use(express.static(path.join(__dirname, 'build')));
-
-     app.get('*', (req, res) => {
-         res.sendFile(path.join(__dirname, 'build', 'index.html'));
-     });
-
-     app.listen(3000, () => {
-         console.log('Server is running on http://localhost:3000');
-     });
-     ```
-
-3. Restart the server:
-   ```bash
-   node index.js
-   ```
-
-Access the app at `http://localhost` or your mapped domain.
-
-## Contributing
-Feel free to open issues or create pull requests to enhance the project. Contributions are welcome!
-
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+The system consists of a **React.js frontend** and a **Node.js backend** with **MariaDB** for database storage.
 
 ---
+## Features
+### ✅ Frontend (React.js)
+- User authentication and session management.
+- Class filtering and manual reservation.
+- Preference management for automatic bookings.
+- Real-time reservation status updates.
+- Mobile-friendly UI using Tailwind CSS.
 
-**Author:** Jaskarn Jagpal
+### ✅ Backend (Node.js, Express.js, MariaDB)
+- Secure API for authentication and booking.
+- Automated class booking via `node-schedule`.
+- Pushover (Apprise) & email notifications.
+- SQL-based storage for user preferences and credentials.
+- Error handling and logging for debugging.
+
+---
+## Tech Stack
+### **Frontend:**
+- React.js (Tailwind CSS for styling)
+- React Router for navigation
+- LocalStorage for session management
+
+### **Backend:**
+- Node.js + Express.js
+- MariaDB for user & preference storage
+- `node-schedule` for automation
+- `nodemailer` for email notifications
+- `apprise` for Pushover notifications
+
+### **Deployment & Environment:**
+- Runs on a Linux server (Unraid, system service not included in this README)
+- `.env` file for managing secrets & configurations
+
+---
+## Installation
+### **Prerequisites**
+- **Node.js** (v16 or later)
+- **MariaDB** (or MySQL, properly configured)
+- **NPM or Yarn**
+- **.env file** with API credentials
+
+### **Backend Setup**
+1. **Clone the repository**:
+   ```sh
+   git clone https://github.com/your-repo/CS-Scheduler.git
+   cd CS-Scheduler/server
+   ```
+2. **Install dependencies**:
+   ```sh
+   npm install
+   ```
+3. **Set up the `.env` file** (refer to `.env.example`):
+   ```env
+   DB_HOST=localhost
+   DB_USER=root
+   DB_PASSWORD=yourpassword
+   DB_NAME=ClubScheduler
+   API_BASE_URL=https://api.clubstudio.com
+   ```
+4. **Run database migrations**:
+   ```sh
+   node db/migrate.js
+   ```
+5. **Start the backend server**:
+   ```sh
+   node index.js
+   ```
+
+### **Frontend Setup**
+1. **Navigate to the frontend directory**:
+   ```sh
+   cd ../frontend
+   ```
+2. **Install dependencies**:
+   ```sh
+   npm install
+   ```
+3. **Start the development server**:
+   ```sh
+   npm start
+   ```
+
+---
+## API Structure
+### **Authentication**
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/auth/login` | POST | Logs in a user and retrieves auth token |
+| `/api/profile/my-profile` | POST | Fetches user profile details |
+
+### **Class Reservations**
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/classes/classes-by-club` | POST | Retrieves upcoming classes |
+| `/api/classes/reservations` | POST | Fetches current reservations |
+| `/api/booking/reserve-class` | POST | Reserves a spot in a class |
+| `/api/booking/addToWaitList` | POST | Adds a user to a waitlist |
+| `/api/booking/cancel` | POST | Cancels a class reservation |
+
+### **User Preferences**
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/preferences/savePreferences` | POST | Saves user preferences |
+| `/api/preferences/getPreferences` | POST | Fetches stored preferences |
+| `/api/preferences/deletePreference` | POST | Deletes a saved preference |
+
+---
+## Automation
+### **Automated Class Booking (`scheduleBooking.js`)**
+The system uses `node-schedule` to check stored preferences and execute bookings **exactly 7 days in advance** at the right time.
+- If a spot is available, it will **automatically reserve** the class.
+- If the class is full, it will **attempt to join the waitlist**.
+- Users will receive a **Pushover notification** or **email confirmation** with booking details.
+
+The automation is scheduled using:
+```javascript
+schedule.scheduleJob({ hour: bookingHour, minute: bookingMinute, dayOfWeek: scheduledDay }, () => {
+    automateClassBooking(className, classTime, classDay);
+});
+```
+
+### **Waitlist Handling**
+When a class is full, the system automatically adds the user to the waitlist:
+```javascript
+if (!spots || spots.Items.length === 0) {
+    console.log("🚫 No spots available. Attempting waitlist...");
+    const waitlistResponse = await addToWaitList(targetClass.CLASS_SCHEDULES_ID, targetClass.START_TIME);
+}
+```
+
+---
+## Notifications
+### **Email Confirmation (`notificationService.js`)**
+Stylized HTML emails are sent for class bookings:
+```html
+<div style="font-family: Arial;">
+    <h2>📅 Class Booking Confirmation</h2>
+    <p>🏋️ Class: CS4</p>
+    <p>⏰ Time: 6:30 PM</p>
+    <p>📌 Spot Number: 12</p>
+</div>
+```
+
+### **Pushover (Apprise)**
+Users receive push notifications for confirmations or failures:
+```javascript
+sendAppriseNotification(`✅ ${username} successfully booked ${className} at ${classTime}`);
+```
+
+---
+## Usage
+1. **Log in** and authenticate using the frontend UI.
+2. **Set up auto-booking preferences** for your classes, times, and days.
+3. **The system will automatically book** your classes or waitlist you if full.
+4. **Check your reservations** in the "My Reservations" section.
+5. **Receive email or push notifications** about your bookings.
+
+---
+## Contributing
+Pull requests and feature suggestions are welcome! Please open an issue if you encounter bugs.
+
+---
+## License
+MIT License. Use freely and contribute!
 

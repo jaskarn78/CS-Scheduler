@@ -11,7 +11,7 @@ const preferenceRoutes = require("./routes/preferenceRoutes");
 //const automateClassBooking = require("./jobs/automateClassBooking");
 const updateDatabase = require("./jobs/updateDatabase");
 const {scheduleBookings} = require("./jobs/scheduleBooking");
-const { sendAppriseNotification } = require("./utils/notificationUtils");
+const { sendAppriseNotification } = require("./services/notificationService");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
