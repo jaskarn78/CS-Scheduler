@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { getReservations } from "../api";
+import { getReservations, cancelReservation } from "../api";
+import { addToCalendar } from "../utils/calendarUtils";
+import { FaCalendarPlus, FaTimesCircle } from "react-icons/fa";
+import { classIcons, getClassCategory } from "../utils/classIconUtils";
+
 
 const Classes = () => {
     const [classes, setClasses] = useState([]);
@@ -12,84 +16,74 @@ const Classes = () => {
         });
     }, []);
 
-    const addToCalendar = (cls) => {
-        // Convert ReserveDate to UTC and format properly
-        const startDate = new Date(cls.ReserveDate);
-        const endDate = new Date(startDate.getTime() + 45 * 60 * 1000); // Class duration = 45 mins
-        const timestamp = new Date(); // Current timestamp
+  
+    const handleCancelReservation = async (classId, trainingId) => {
+        const confirmCancel = window.confirm("Are you sure you want to cancel this class?");
+        if (!confirmCancel) return;
 
-        const formatToICS = (date) => {
-            return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"; // Format YYYYMMDDTHHmmssZ
-        };
-
-        const dtStart = formatToICS(startDate);
-        const dtEnd = formatToICS(endDate);
-        const dtStamp = formatToICS(timestamp);
-
-        const icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-SUMMARY:Class: ${cls.ClassName}
-DTSTART:${dtStart}
-DTEND:${dtEnd}
-DTSTAMP:${dtStamp}
-UID:${Date.now()}-${cls.ClassName.replace(/\s+/g, "")}
-DESCRIPTION:Instructor: ${cls.InstructorName}\\nSpot: ${cls.SpotDisplayNumber || "Waitlisted"}
-LOCATION:Club Studio 7440 Elk Grove Blvd, Elk Grove, CA 95757
-STATUS:${cls.IsCancelledClass ? "CANCELLED" : "CONFIRMED"}
-PRIORITY:0
-END:VEVENT
-END:VCALENDAR`.replace(/\n/g, "\r\n"); // iOS requires CRLF (`\r\n`)
-
-        // Create a Blob for the .ics file
-        const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
-
-        // Create a temporary download link
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${cls.ClassName.replace(/\s+/g, "_")}_Event.ics`;
-        document.body.appendChild(link);
-        link.click();
-
-        // Cleanup
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
+        try {
+            const response = await cancelReservation(classId, trainingId);
+            if (response.Success) {
+                alert("Class reservation canceled successfully!");
+                setClasses(classes.filter((cls) => cls.ClassReservationID !== classId));
+            } else {
+                alert("Failed to cancel class. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error canceling class:", error);
+            alert("An error occurred. Please try again.");
+        }
     };
 
     return (
-        <div className="classes-list">
-            <h2>My Classes</h2>
+        <div className="max-w-3xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+            <h2 className="text-2xl font-semibold text-gray-900 text-center">My Classes</h2>
+    
             {classes.length === 0 ? (
-                <p>No upcoming classes.</p>
+                <p className="text-gray-600 text-center mt-4">No upcoming classes.</p>
             ) : (
-                <ul>
-                    {classes.map((cls) => (
-                        <li key={cls.ClassReservationID}>
-                            <h3>{cls.ClassName}</h3>
-                            <div className="line-item"><strong>Instructor:</strong> {cls.InstructorName}</div>
-                            <div className="line-item"><strong>Class Time:</strong> {new Date(cls.ReserveDate).toLocaleString()}</div>
-                            <div className="line-item"><strong>Spot Number:</strong> {cls.SpotDisplayNumber || "Waitlisted"}</div>
-
-                            {/* Show button ONLY if user is enrolled (not waitlisted) */}
-                            {!cls.IsWaitList && (
-                                <button 
-                                    onClick={() => addToCalendar(cls)}
-                                    style={{
-                                        marginTop: "10px",
-                                        padding: "8px 12px",
-                                        backgroundColor: "#007bff",
-                                        color: "#fff",
-                                        border: "none",
-                                        borderRadius: "5px",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    Add to Calendar 📅
-                                </button>
-                            )}
-                        </li>
-                    ))}
-                </ul>
+                <div className="mt-6 space-y-4">
+                    {classes.map((cls) => {
+                        const classCategory = getClassCategory(cls.ClassName);
+                        return (
+                            <div key={cls.ClassReservationID} className="bg-gray-100 p-4 rounded-lg shadow-md flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                                
+                                {/* Icon Section */}
+                                <div className="flex-shrink-0">
+                                    {classIcons[classCategory]}
+                                </div>
+    
+                                {/* Class Details */}
+                                <div className="flex-grow">
+                                    <h3 className="text-lg font-semibold text-gray-800">{cls.ClassName}</h3>
+                                    <p className="text-gray-600"><strong>Instructor:</strong> {cls.InstructorName}</p>
+                                    <p className="text-gray-600"><strong>Class Time:</strong> {new Date(cls.ReserveDate).toLocaleString()}</p>
+                                    <p className="text-gray-600"><strong>Spot Number:</strong> {cls.SpotDisplayNumber || "Waitlisted"}</p>
+    
+                                    <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                                        {/* Add to Calendar Button */}
+                                        <button 
+                                            onClick={() => addToCalendar(cls)}
+                                            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 w-full sm:w-auto"
+                                        >
+                                            <FaCalendarPlus className="text-white-300" />
+                                            Add to Calendar
+                                        </button>
+                                        
+                                        {/* Cancel Button */}
+                                        <button 
+                                            onClick={() => handleCancelReservation(cls.ClassReservationID, cls.TrainingAppointmentID)}
+                                            className="flex items-center justify-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-200 w-full sm:w-auto"
+                                        >
+                                            <FaTimesCircle className="text-white" />
+                                            Cancel Reservation
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             )}
         </div>
     );

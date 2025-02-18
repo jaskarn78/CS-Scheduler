@@ -1,5 +1,6 @@
 // services/authService.js
 const axios = require("axios");
+const pool = require("../db/mysql");  // Import database connection
 const { API_BASE_URL, AUTH_CREDENTIALS, CLIENT } = require("../config/config");
 
 let authToken = null;
@@ -39,7 +40,28 @@ const authenticate = async (credentials) => {
             const fullToken = response.data.Value;
             authToken = fullToken.split("|")[1];  // Extract only token
             console.log("Authentication successful, token retrieved:");
-            return authToken;
+            const username = credentials.username;  // Assuming you have the username
+            const password = credentials.password;  // Assuming you have the password
+            const [existingUser] = await pool.query("SELECT id, barcode FROM Users WHERE username = ?", [username]);
+            let userID;
+            let barcode = null;
+            if (existingUser.length === 0) {
+                // Insert new user into database
+                const insertResult = await pool.query(
+                    "INSERT INTO Users (username, password_hash) VALUES (?, ?)",
+                    [username, password]
+                );
+                userID = insertResult.insertId; // Get the auto-generated user ID
+                console.log(`🆕 New user added: ${username}`);
+            } else {
+                userID= existingUser[0].id; // Get existing user ID
+                barcode = existingUser[0].barcode;
+                console.log(`👤 User ${username}: user id ${userID}. already exists.`);
+            
+            }
+
+
+            return { authToken, userID,barcode };
         } else {
             console.error("Authentication failed:", response.data.Message);
             return null;

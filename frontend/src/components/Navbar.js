@@ -5,41 +5,41 @@ const Navbar = ({ setToken }) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const navigate = useNavigate();
 
-    const toggleMenu = () => {
-        setMenuOpen(!menuOpen);
-    };
+    const toggleMenu = () => setMenuOpen(!menuOpen);
 
     // Logout function
     const handleLogout = () => {
-        localStorage.removeItem("token"); // Remove token
-        localStorage.removeItem("authHeader"); // Remove auth header
+        localStorage.removeItem("token");
+        localStorage.removeItem("authHeader");
         localStorage.removeItem("barCode");
-        setToken(null); // Update state to force logout
-        navigate("/login"); // Redirect to login page
+        localStorage.removeItem("userID");
+        setToken(null);
+        navigate("/login");
     };
 
     return (
-        <nav className="navigation bg-black text-white shadow-md fixed top-0 w-full z-10">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav className="bg-gray-900 text-white shadow-lg fixed top-0 w-full z-50">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
-                    <h1 className="text-2xl font-bold">Club Studio Scheduler</h1>
-                    <div className="lg:hidden">
-                        <button
-                            onClick={toggleMenu}
-                            className="text-white text-3xl focus:outline-none"
-                        >
-                            ☰
-                        </button>
-                    </div>
-                    <ul
-                        className={`${
-                            menuOpen ? "block" : "hidden"
-                        } absolute lg:static lg:flex lg:gap-6 w-full lg:w-auto top-16 lg:top-0 left-0 lg:left-auto text-center lg:text-left lg:p-0`}
+                    {/* Logo */}
+                    <h1 className="text-xl lg:text-2xl font-semibold tracking-wide text-white">
+                        Club Studio Scheduler
+                    </h1>
+
+                    {/* Mobile Menu Button */}
+                    <button
+                        onClick={toggleMenu}
+                        className="lg:hidden text-gray-300 text-3xl focus:outline-none"
                     >
+                        ☰
+                    </button>
+
+                    {/* Navigation Links */}
+                    <ul className={`lg:flex lg:items-center lg:gap-8 absolute lg:static w-full lg:w-auto top-16 left-0 bg-gray-900 lg:bg-transparent transition-all duration-300 ${menuOpen ? "block py-4" : "hidden"}`}>
                         <li>
                             <Link
                                 to="/"
-                                className="block py-2 px-4 text-lg text-white hover:text-gray-300 lg:inline"
+                                className="block px-6 py-2 text-lg font-medium text-gray-200 hover:text-white transition duration-300"
                                 onClick={() => setMenuOpen(false)}
                             >
                                 My Classes
@@ -48,7 +48,7 @@ const Navbar = ({ setToken }) => {
                         <li>
                             <Link
                                 to="/upcoming-classes"
-                                className="block py-2 px-4 text-lg text-white hover:text-gray-300 lg:inline"
+                                className="block px-6 py-2 text-lg font-medium text-gray-200 hover:text-white transition duration-300"
                                 onClick={() => setMenuOpen(false)}
                             >
                                 Schedule
@@ -56,11 +56,20 @@ const Navbar = ({ setToken }) => {
                         </li>
                         <li>
                             <Link
+                                to="/my-preferences"
+                                className="block px-6 py-2 text-lg font-medium text-gray-200 hover:text-white transition duration-300"
+                                onClick={() => setMenuOpen(false)}
+                            >
+                                Preferences
+                            </Link>
+                        </li>
+                        <li>
+                            <button
                                 onClick={handleLogout}
-                                className="block py-2 px-4 text-lg text-red-500 hover:text-red-300 lg:inline"
+                                className="block px-6 py-2 text-lg font-medium text-red-400 hover:text-red-300 transition duration-300"
                             >
                                 Logout
-                            </Link>
+                            </button>
                         </li>
                     </ul>
                 </div>

@@ -14,7 +14,8 @@ router.post("/login", async (req, res) => {
     const response = await authenticate({ username, password });
 
     if (response) {
-      return res.status(200).json({ success: true, token: response });
+      console.log(`Username: ${username}`, `Password: ${password}`);
+      return res.status(200).json({ success: true, token: response.authToken, userID: response.userID, barcode: response.barcode });
     } else {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
