@@ -1,8 +1,13 @@
 const dayjs = require("dayjs");
 const pool = require("../db/mysql");
+const { logger } = require("../utils/logger");
+require("dotenv").config();
+const env = process.env.NODE_ENV || "production"; // Default to production if not set
+
+
 const {sendAppriseNotification, sendEmailNotification} = require("../services/notificationService");
 const {generateEmailTemplate} = require("../utils/emailTemplates");
-const {convertTo12HourFormat} = require("../utils/dateTimeUtils");
+const {convertTo12HourFormat, convertTo24HourFormat} = require("../utils/dateTimeUtils");
 const {
     authenticate,
     fetchClasses,
@@ -18,8 +23,8 @@ const {
  * @param {string} classTime - The time of the class (e.g., "18:30:00").
  * @param {string} classDay - The day of the week for this class.
  */
-const automateClassBooking = async (className, classTime, classDay) => {
-    console.log(`🔄 Starting booking automation for ${className} at ${classTime} on ${classDay}`);
+const automateClassBooking = async (className, classTime, classDay, inputDate=null) => {
+    logger.info(`🔄 Starting booking automation for ${className} at ${convertTo12HourFormat(classTime)} on ${classDay}`);
 
     try {
         // Fetch user preferences and their credentials
@@ -29,52 +34,56 @@ const automateClassBooking = async (className, classTime, classDay) => {
              FROM UserPreferences up
              JOIN Users u ON up.user_id = u.id
              WHERE up.className = ? AND up.classTime = ? AND up.classDay = ?`,
-            [className, classTime, classDay]
+            [className, convertTo24HourFormat(classTime), classDay]
         );
 
         if (users.length === 0) {
-            console.log(`🚫 No users found with preference for ${className} at ${classTime} on ${classDay}`);
+            logger.info(`🚫 No users found with preference for ${className} at ${classTime} on ${classDay}`);
             return;
         }
 
         for (const user of users) {
             const { user_id, username, email, first_name, last_name, mobile } = user;
-            console.log(`🔑 Authenticating ${username} (User ID: ${user_id}) to book ${className}`);
+            logger.info(`🔑 Authenticating ${username} (User ID: ${user_id}) to book ${className}`);
 
             // Authenticate user
             const token = await authenticate(user_id);
             if (!token) {
-                console.log(`⚠️ Failed authentication for ${username}, skipping...`);
+                logger.info(`⚠️ Failed authentication for ${username}, skipping...`);
                 continue;
             }
 
             // Calculate the booking date (7 days in advance)
-            const targetDate = dayjs().add(7, "day").format("YYYY-MM-DD");
-            console.log(`📅 Searching ${className} for ${username} on ${targetDate}`);
+            const targetDate = env ==='production' ? dayjs().add(7, "day").format("YYYY-MM-DD") : dayjs(inputDate).format("YYYY-MM-DD");
+            logger.info(`📅 Searching ${className} for ${username} on ${targetDate}`);
 
             // Fetch available classes
             const classData = await fetchClasses(user_id, targetDate);
             if (!classData || !classData.Value) {
-                console.log(`🚫 No available ${className} classes for ${targetDate}`);
+                logger.info(`🚫 No available ${className} classes for ${targetDate}`);
                 continue;
             }
 
             // Find the class matching name and time
             const targetClass = classData.Value.find(
-                (cls) => cls.className.toLowerCase() === className.toLowerCase() && cls.START_TIME.includes(convertTo12HourFormat(classTime))
-            );
-            classData.Value.forEach(itm=>{
-                if(itm.className.toLowerCase() == "ride"){
-                    console.log(`${itm.className} ${itm.START_TIME}`)
-                }
-            })
+                (cls) => {
+                    if(cls.className.toLowerCase() === className.toLowerCase()){
+                        console.info(`Found class: ${cls.className} at ${cls.START_TIME}`)
+                    }
+                    if(cls.className.toLowerCase() === className.toLowerCase() && cls.START_TIME.includes(convertTo12HourFormat(classTime))){
+                         logger.info(cls.className, cls.className.toLowerCase() === className.toLowerCase());
+                         return cls;
 
+                     }
+                }
+            );
+          
             if (!targetClass) {
-                console.log(`⚠️ No matching ${className} class found at ${classTime}`);
+                logger.info(`⚠️ No matching ${className} class found at ${classTime}`);
                 continue;
             }
 
-            console.log(`✅ Found class: ID ${targetClass.CLASS_SCHEDULES_ID}`);
+            logger.info(`✅ Found class: ID ${targetClass.CLASS_SCHEDULES_ID}`);
 
             const findLowestNumberSpot = (spots) => {
                 return spots
@@ -85,7 +94,7 @@ const automateClassBooking = async (className, classTime, classDay) => {
             // Get available spots
             const spots = await getAvailableSpots(user_id, targetClass);
             if (!spots || spots.Items.length === 0) {
-                console.log("🚫 No spots available.");
+                logger.info("🚫 No spots available.");
                 continue;
             }
 
@@ -94,13 +103,24 @@ const automateClassBooking = async (className, classTime, classDay) => {
             
 
             if (!lowestSpot) {
-                console.log("🚫 No suitable spot found.");
+                logger.info("🚫 No suitable spot found.");
                 continue;
             }
 
-            console.log(`📌 Lowest available spot: ${lowestSpot.Text}`);
+            logger.info(`📌 Lowest available spot: ${lowestSpot.Text}`);
 
             // Attempt to reserve the class
+            if(env == 'development'){
+                logger.info("Skipping reservation in development environment");
+                logger.info({
+                    userID: user_id,
+                    class: targetClass.CLASS_SCHEDULES_ID,
+                    spot: lowestSpot.Id,
+                    time: targetClass.START_TIME
+                });
+                return;
+                
+            }
             const reservationResponse = await reserveSpot(
                 user_id,
                 targetClass.CLASS_SCHEDULES_ID,
@@ -135,7 +155,7 @@ const automateClassBooking = async (className, classTime, classDay) => {
                 notificationMessage += `🕒 Server Time: ${CurrentServerTime}\n`;
                 notificationMessage += `🌎 Timezone Offset: ${ServerTimeZoneOffset}`;
             
-                console.log(notificationMessage);
+                logger.info(notificationMessage);
                 
                 // Send notification with booking status
                 sendAppriseNotification(notificationMessage);
@@ -150,7 +170,7 @@ const automateClassBooking = async (className, classTime, classDay) => {
 
             
             } else {
-                console.log(`⚠️ Booking failed for ${className} at ${classTime}.`);
+                logger.info(`⚠️ Booking failed for ${className} at ${classTime}.`);
             
                 let failureMessage = `❌ Booking Failed for ${className} at ${classTime}\n`;
                 failureMessage += `👤 User: ${first_name} ${last_name} | 📧 Email: ${email}\n`;
@@ -166,7 +186,8 @@ const automateClassBooking = async (className, classTime, classDay) => {
             }
         }
     } catch (error) {
-        console.error("❌ Error during class booking automation:", error);
+        logger.error("❌ Error during class booking automation:", error);
     }
 };
+
 module.exports = automateClassBooking;

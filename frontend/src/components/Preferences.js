@@ -1,23 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { saveUserPreferences, getUserPreferences,deleteUserPreference } from "../api";
+import { saveUserPreferences, getUserPreferences,deleteUserPreference, getAvailableClassTimes } from "../api";
 import { FaTrash } from "react-icons/fa"; // Import delete icon
 import { LuTrash2 } from "react-icons/lu";
 
 
 const DAYS_OF_WEEK = [
-    { label: "Mon", value: "Mon" },
-    { label: "Tue", value: "Tue" },
-    { label: "Wed", value: "Wed" },
-    { label: "Thur", value: "Thu" },
-    { label: "Fri", value: "Fri" },
-    { label: "Sat", value: "Sat" },
-    { label: "Sun", value: "Sun" },
+    { label: "Sun", value: "Sun", id:1 },
+    { label: "Mon", value: "Mon", id:2 },
+    { label: "Tue", value: "Tue",id: 3 },
+    { label: "Wed", value: "Wed", id:4 },
+    { label: "Thur", value: "Thu", id:5 },
+    { label: "Fri", value: "Fri", id:6 },
+    { label: "Sat", value: "Sat", id:7 },
 ];
 
 const Preferences = () => {
     const [selectedClass, setSelectedClass] = useState("");
     const [selectedTime, setSelectedTime] = useState("");
     const [selectedDays, setSelectedDays] = useState([]);
+    const [availableTimes, setAvailableTimes] = useState([]);
     const [preferences, setPreferences] = useState([]);
 
     useEffect(() => {
@@ -34,6 +35,24 @@ const Preferences = () => {
         setSelectedDays((prevDays) =>
             prevDays.includes(day) ? prevDays.filter((d) => d !== day) : [...prevDays, day]
         );
+    };
+    //Fetch available times whenever a class and days are selected
+    useEffect(() => {
+        if (selectedClass && selectedDays.length > 0) {
+            fetchAvailableTimes();
+        }else{
+            setAvailableTimes([]);
+        }
+    },[selectedClass, selectedDays]);
+
+    const fetchAvailableTimes = async () => {
+        const dayIds = selectedDays.map((day) => DAYS_OF_WEEK.find((d) => d.value === day).id); // Convert to IDs
+        const response = await getAvailableClassTimes(selectedClass, dayIds);
+        if (response.Success) {
+            setAvailableTimes(response.Value.map((classItem) => classItem.StartTime)); // Extract times
+        } else {
+            setAvailableTimes([]);
+        }
     };
 
     const handleDeletePreference = async (preferenceId, className, classTime) => {
@@ -103,11 +122,6 @@ const Preferences = () => {
             </div>
 
             <div className="mt-4">
-                <label className="block text-gray-700 font-medium">Select Time</label>
-                <input type="time" value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)} className="w-full border p-2 rounded-lg mt-2"/>
-            </div>
-
-            <div className="mt-4">
                 <label className="block text-gray-700 font-medium">Select Days</label>
                 <div className="grid grid-cols-4 gap-2 mt-2">
                     {DAYS_OF_WEEK.map((day) => (
@@ -123,6 +137,21 @@ const Preferences = () => {
                     ))}
                 </div>
             </div>
+
+           {/* Time Selection (Only show if class & days are selected) */}
+           {availableTimes.length > 0 && (
+                <div className="mt-4">
+                    <label className="block text-gray-700 font-medium">Select Time</label>
+                    <select value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)} className="w-full border p-2 rounded-lg mt-2">
+                        <option value="">Select Time</option>
+                        {availableTimes.map((time, index) => (
+                            <option key={index} value={time}>
+                                {time}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
 
             <button onClick={handleSavePreferences} className="mt-6 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition w-full">
                 Save Preferences

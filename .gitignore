@@ -5,3 +5,4 @@ node_modules
 index-old.js
 cs-sessions.chlz
 server/db/mobileclubdb.db
+logs

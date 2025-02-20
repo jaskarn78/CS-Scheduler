@@ -73,10 +73,18 @@ const formatDate = (dateString, format = "MM/DD/YYYY", padStart = true, includeT
     return includeTime ? `${formattedDate} ${timePart}`.trim() : formattedDate;
 };
 const convertTo12HourFormat = (timeStr) => {
+    if(timeStr.includes("AM") || timeStr.includes("PM")) {
+        return timeStr;
+    }
     const [hour, minute, second] = timeStr.split(":").map(Number);
     const period = hour >= 12 ? "PM" : "AM";
     const formattedHour = hour % 12 === 0 ? 12 : hour % 12; // Convert 0 or 12 to 12
 
     return `${formattedHour}:${minute.toString().padStart(2, "0")}:${second.toString().padStart(2, "0")} ${period}`;
 };
-module.exports = { formatDate, convertTo12HourFormat };
+const convertTo24HourFormat = (timeStr) => {
+    const [hour, minute, second] = timeStr.split(/[:\s]/).map(Number);
+    const period = timeStr.includes("PM") && hour !== 12 ? hour + 12 : hour === 12 ? 0 : hour; 
+    return `${period}:${minute.toString().padStart(2, "0")}:${second.toString().padStart(2, "0")}`;
+};
+module.exports = { formatDate, convertTo12HourFormat, convertTo24HourFormat };

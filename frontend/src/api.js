@@ -55,7 +55,7 @@ export const getUserProfile = async () => {
 };
 
 export const getUpcomingClasses = async (start) => {
-    const response = await fetch(`${API_BASE_URL}/classes/classes-by-club`, {
+    const response = await fetch(`${API_BASE_URL}/classes/classesByClub`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({"token": getAuthToken(),"authHeader": getAuthorizationHeader(),startDate:start }),
@@ -189,6 +189,15 @@ export const deleteUserPreference = async (preferenceId, className, classTime) =
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: localStorage.getItem("userID"), preferenceId: preferenceId, className:className, classTime:classTime }),
+    });
+    return response.json();
+};
+
+export const getAvailableClassTimes = async(className, days)=>{
+    const response = await fetch(`/api/classes/getAvailableClassTimes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ className: className, days:days }),
     });
     return response.json();
 };

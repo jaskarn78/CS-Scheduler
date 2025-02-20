@@ -5,13 +5,13 @@ const classIcons = (env)=>{
     ? 'http://192.168.7.200:3000/images'
     : 'https://cs.jjagpal.me/images';
     return {
-        "RIDE": `<img src="${baseURL}/stationary-bike.png" alt="Ride" style='width:2rem; height:2rem;' class="w-10 h-10 text-gray-700" />`,
-        "BOX": `<img src="${baseURL}/boxing-gloves.png" alt="Box" style='width:2rem; height:2rem;' class="w-10 h-10 text-gray-700" />`,
-        "CS4": `<img src="${baseURL}/gym.png" alt="CS4" style='width:2rem; height:2rem;' class="w-10 h-10 text-gray-700" />`,
-        "REFORM": `<img src="${baseURL}/reformer.png" alt="Reform" style='width:2rem; height:2rem;' class="w-10 h-10 text-gray-700" />`, 
-        "SWEAT+": `<img src="${baseURL}/yoga-mat.png" alt="Sweat+ style='width:2rem; height:2rem;'" class="w-10 h-10 text-gray-700" />`,
-        "SPECIALTY": `<img src="${baseURL}/trampoline-jumping.png" style='width:2rem; height:2rem;' alt="Specialty" class="w-10 h-10 text-gray-700" />`,
-        "HOT PILATES": `<img src="${baseURL}/pilates.png" alt="Hot Pilates" style='width:2rem; height:2rem;' class="w-10 h-10 text-gray-700" />`,
+        "RIDE": `<img src="${baseURL}/stationary-bike.png" alt="Ride" style='width:1.5rem; height:1.5rem;' class="w-10 h-10 text-gray-700" />`,
+        "BOX": `<img src="${baseURL}/boxing-gloves.png" alt="Box" style='width:1.5rem; height:1.5rem;' class="w-10 h-10 text-gray-700" />`,
+        "CS4": `<img src="${baseURL}/gym.png" alt="CS4" style='width:1.5rem; height:1.5rem;' class="w-10 h-10 text-gray-700" />`,
+        "REFORM": `<img src="${baseURL}/reformer.png" alt="Reform" style='width:1.5rem; height:1.5rem;' class="w-10 h-10 text-gray-700" />`, 
+        "SWEAT+": `<img src="${baseURL}/yoga-mat.png" alt="Sweat+ style='width:1.5rem; height:1.5rem;'" class="w-10 h-10 text-gray-700" />`,
+        "SPECIALTY": `<img src="${baseURL}/trampoline-jumping.png" style='width:1.5rem; height:1.5rem;' alt="Specialty" class="w-10 h-10 text-gray-700" />`,
+        "HOT PILATES": `<img src="${baseURL}/pilates.png" alt="Hot Pilates" style='width:1.5rem; height:1.5rem;' class="w-10 h-10 text-gray-700" />`,
     }
 
 };
@@ -36,12 +36,13 @@ const getClassCategory = (className) => {
 const generateEmailTemplate = (firstName, lastName, className, classTime, status, spotNumber = "N/A") => {
     const env = process.env.NODE_ENV || "production"; // Default to production if not set
     const icons = classIcons(env);
-    const classCategory = getClassCategory(className);
-    const classIcon = icons[classCategory] || "🏋️"; // Default emoji if no icon is found
+    const classCategory = getClassCategory(className.toUpperCase());
+    const classIcon = icons[classCategory.toUpperCase()] || "🏋️"; // Default emoji if no icon is found
     const logo = `<img src="${env === "development" ? "http://192.168.7.200:3000/images/cs-logo.png" : "https://cs.jjagpal.me/images/cs-logo.png"}" alt="Club Studio Logo" width="80">`;
     const dateTimeParts = classTime.split(" ");
     const date = dateTimeParts[0];
-    const time = convertTo12HourFormat(dateTimeParts[1]);
+    const time = dateTimeParts[1];
+    console.log(classIcon);
     return `
         <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px;">
             <div style="text-align: center;">

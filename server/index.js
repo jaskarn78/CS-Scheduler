@@ -3,6 +3,8 @@ const schedule = require("node-schedule");
 const cors = require("cors");
 const path = require("path");
 
+const {logger, logRequests} = require("./utils/logger");
+
 const classRoutes = require("./routes/classRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
@@ -26,6 +28,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(logRequests);
 
 // ✅ API Routes
 app.use("/api/auth", authRoutes);
@@ -39,7 +42,7 @@ app.use(express.static(path.join(__dirname, "../frontend/build")));
 
 app.get("*", (req, res) => {
     if (req.originalUrl.startsWith("/api")) {
-        console.error(`🚫 API request not handled: ${req.originalUrl}`);
+        logger.error(`🚫 API request not handled: ${req.originalUrl}`);
         return res.status(404).json({ error: "API route not found" });
     }
     res.sendFile(path.join(__dirname, "../frontend/build", "index.html"));
@@ -47,8 +50,8 @@ app.get("*", (req, res) => {
 
 // ✅ Start Server
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📅 Current system time: ${new Date().toLocaleString()}`);
+    logger.info(`🚀 Server running on http://localhost:${PORT}`);
+    logger.info(`📅 Current system time: ${new Date().toLocaleString()}`);
 });
 
 // ✅ Scheduling Automation Jobs
@@ -57,16 +60,7 @@ const scheduleJob = (cronExp, jobFunction, name) => {
     console.log(`📅 Scheduled job: ${name}`);
 };
 
-// // Weekday CS4 Class Booking (Monday-Thursday at 6:30 PM)
-// scheduleJob({ hour: 19, minute: 30, dayOfWeek: new schedule.Range(1, 4) }, () => {
-//     automateClassBooking("CS4", "6:30:00 PM");
-// }, "Weekday CS4 Booking");
 
-
-// // Weekend CS4 Class Booking (Saturday & Sunday at 8:30 AM)
-// scheduleJob({ hour: 9, minute: 30, dayOfWeek: [0, 6] }, () => {
-//     automateClassBooking("CS4", "8:30:00 AM");
-// }, "Weekend CS4 Booking");
 scheduleBookings();
 //Update the database every Friday at 11:00 AM
 scheduleJob({ hour: 11, minute: 0, dayOfWeek: new schedule.Range(5, 5) }, () => {
