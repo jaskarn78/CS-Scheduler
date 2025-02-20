@@ -20,6 +20,7 @@ const Preferences = () => {
     const [selectedDays, setSelectedDays] = useState([]);
     const [availableTimes, setAvailableTimes] = useState([]);
     const [preferences, setPreferences] = useState([]);
+    const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
         async function fetchPreferences() {
@@ -46,12 +47,19 @@ const Preferences = () => {
     },[selectedClass, selectedDays]);
 
     const fetchAvailableTimes = async () => {
+        if (!selectedClass || selectedDays.length === 0) {
+            setAvailableTimes([]);
+            setErrorMessage("Please select a class and at least one day.");
+            return;
+        }
         const dayIds = selectedDays.map((day) => DAYS_OF_WEEK.find((d) => d.value === day).id); // Convert to IDs
         const response = await getAvailableClassTimes(selectedClass, dayIds);
-        if (response.Success) {
+        if (response.Success && response.Value.length > 0) {
             setAvailableTimes(response.Value.map((classItem) => classItem.StartTime)); // Extract times
+            setErrorMessage(""); // Clear any previous error messages
         } else {
-            setAvailableTimes([]);
+            setAvailableTimes([]); // Ensure no previous results persist
+            setErrorMessage(response.message || `No ${selectedClass} classes available for the selected days.`); // Display error message
         }
     };
 
@@ -151,6 +159,9 @@ const Preferences = () => {
                         ))}
                     </select>
                 </div>
+            )}
+            {errorMessage && (
+                <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
             )}
 
             <button onClick={handleSavePreferences} className="mt-6 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition w-full">

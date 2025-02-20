@@ -172,7 +172,7 @@ const getClassesByTypeAndDays = async (req, res) => {
         if (result.length > 0) {
             response.Value = result;
         } else {
-            response[className] = { error: `No ${className} found for the given days` };
+            response["message"] = `No available times found for ${className} for the given days. Please try different days or check back later.`;
         }
 
         res.json(response);
