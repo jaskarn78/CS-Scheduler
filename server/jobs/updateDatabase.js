@@ -61,5 +61,4 @@ const updateDatabase = async () => {
 
 
 
-
 module.exports = updateDatabase;

@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-
+import { Link, useNavigate, useLocation} from "react-router-dom";
+import { Menu, X } from "lucide-react";
+import "../styles/Navbar.css";
 const Navbar = ({ setToken }) => {
-    const [menuOpen, setMenuOpen] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const navigate = useNavigate();
-
-    const toggleMenu = () => setMenuOpen(!menuOpen);
-
+    const location = useLocation();
+    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+    const isActive = (path) => location.pathname === path;
     // Logout function
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -18,64 +19,80 @@ const Navbar = ({ setToken }) => {
     };
 
     return (
-        <nav className="bg-gray-900 text-white shadow-lg fixed top-0 w-full z-50">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
-                    {/* Logo */}
-                    <h1 className="text-xl lg:text-2xl font-semibold tracking-wide text-white">
-                        Club Studio Scheduler
-                    </h1>
-
-                    {/* Mobile Menu Button */}
-                    <button
-                        onClick={toggleMenu}
-                        className="lg:hidden text-gray-300 text-3xl focus:outline-none"
-                    >
-                        ☰
-                    </button>
-
-                    {/* Navigation Links */}
-                    <ul className={`lg:flex lg:items-center lg:gap-8 absolute lg:static w-full lg:w-auto top-16 left-0 bg-gray-900 lg:bg-transparent transition-all duration-300 ${menuOpen ? "block py-4" : "hidden"}`}>
-                        <li>
-                            <Link
-                                to="/"
-                                className="block px-6 py-2 text-lg font-medium text-gray-200 hover:text-white transition duration-300"
-                                onClick={() => setMenuOpen(false)}
-                            >
-                                My Classes
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                to="/upcoming-classes"
-                                className="block px-6 py-2 text-lg font-medium text-gray-200 hover:text-white transition duration-300"
-                                onClick={() => setMenuOpen(false)}
-                            >
-                                Schedule
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                to="/my-preferences"
-                                className="block px-6 py-2 text-lg font-medium text-gray-200 hover:text-white transition duration-300"
-                                onClick={() => setMenuOpen(false)}
-                            >
-                                Preferences
-                            </Link>
-                        </li>
-                        <li>
-                            <button
-                                onClick={handleLogout}
-                                className="block px-6 py-2 text-lg font-medium text-red-400 hover:text-red-300 transition duration-300"
-                            >
-                                Logout
-                            </button>
-                        </li>
-                    </ul>
-                </div>
+        <div className="nav-container">
+          {/* Top navigation bar */}
+          <nav className="top-nav">
+            <div className="nav-content">
+              <div className="nav-brand">
+                <Link to="/" className="brand-link">
+                  <span className="brand-icon">CS</span>
+                  <span className="brand-text">ClubSync</span>
+                </Link>
+              </div>
+              
+              {/* Desktop Navigation Links */}
+              <div className="desktop-links">
+                <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
+                  My Classes
+                </Link>
+                <Link to="/upcoming-classes" className={`nav-link ${isActive('/upcoming-classes') ? 'active' : ''}`}>
+                  Schedule
+                </Link>
+                <Link to="/my-preferences" className={`nav-link ${isActive('/my-preferences') ? 'active' : ''}`}>
+                  Preferences
+                </Link>
+                <Link to="/logout" className="nav-link logout" onClick={handleLogout}>
+                  Logout
+                </Link>
+              </div>
+              
+              {/* Mobile Menu Button */}
+              <button className="menu-button" onClick={toggleMenu} aria-label="Toggle menu">
+                <svg 
+                  viewBox="0 0 24 24" 
+                  width="24" 
+                  height="24" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  fill="none" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  {isMenuOpen ? (
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  ) : (
+                    <>
+                      <line x1="3" y1="12" x2="21" y2="12" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <line x1="3" y1="18" x2="21" y2="18" />
+                    </>
+                  )}
+                </svg>
+              </button>
             </div>
-        </nav>
-    );
+          </nav>
+          
+          {/* Mobile Menu Dropdown */}
+          {isMenuOpen && (
+            <div className="mobile-menu">
+              <Link to="/" className={`mobile-link ${isActive('/') ? 'active' : ''}`} onClick={toggleMenu}>
+                My Classes
+              </Link>
+              <Link to="/upcoming-classes" className={`mobile-link ${isActive('/upcoming-classes') ? 'active' : ''}`} onClick={toggleMenu}>
+                Schedule
+              </Link>
+              <Link to="/my-preferences" className={`mobile-link ${isActive('/my-preferences') ? 'active' : ''}`} onClick={toggleMenu}>
+                Preferences
+              </Link>
+              <Link to="/logout" className="mobile-link logout" onClick={handleLogout}>
+                Logout
+              </Link>
+            </div>
+          )}
+          
+     
+        </div>
+      );
 };
 
 export default Navbar;

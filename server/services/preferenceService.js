@@ -1,5 +1,5 @@
 const pool = require("../db/mysql"); // Import database connection
-
+const {convertTo24HourFormat} = require("../utils/dateTimeUtils");
 /**
  * Saves user preferences for class scheduling, storing each day as a separate row.
  * @param {number} userID - The ID of the user.
@@ -13,18 +13,18 @@ const saveUserPreferences = async (userID, preferences) => {
     try {
         await connection.beginTransaction();
 
-        for (const { className, classTime, classDay } of preferences) {
+        for (const { className, classTime, classDay, preferredSpot } of preferences) {
             // Check if this specific (userID, class, time, day) entry already exists
             const [existingPreference] = await connection.query(
                 "SELECT * FROM UserPreferences WHERE user_id= ? AND className = ? AND classTime = ? AND classDay = ?",
-                [userID, className, classTime, classDay]
+                [userID, className, convertTo24HourFormat(classTime), classDay]
             );
 
             if (existingPreference.length === 0) {
                 // Insert if it doesn't exist
                 await connection.query(
-                    "INSERT INTO UserPreferences (user_id, className, classTime, classDay) VALUES (?, ?, ?, ?)",
-                    [userID, className, classTime, classDay]
+                    "INSERT INTO UserPreferences (user_id, className, classTime, classDay, preferredSpot) VALUES (?, ?, ?, ?, ?)",
+                    [userID, className, convertTo24HourFormat(classTime), classDay, preferredSpot]
                 );
             }
         }
@@ -40,6 +40,8 @@ const saveUserPreferences = async (userID, preferences) => {
     }
 };
 
+
+
 /**
  * Retrieves user preferences grouped by class and time.
  * @param {number} userID - The ID of the user.
@@ -48,7 +50,7 @@ const saveUserPreferences = async (userID, preferences) => {
 const getUserPreferences = async (userID) => {
     try {
         const [preferences] = await pool.query(
-            `SELECT id, className, classTime, 
+            `SELECT id, className, classTime, preferredSpot, 
                 GROUP_CONCAT(classDay ORDER BY FIELD(classDay, 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')) AS classDays
              FROM UserPreferences
              WHERE user_id = ?
@@ -77,6 +79,36 @@ const deletePreference = async (userId, className, classTime) => {
     }
 };
 
+const updateConfirmEmailPreference = async(userID, getConfirmEmail)=>{
+    try{
+        const [result] = await pool.query(
+            "UPDATE Users SET getConfirmEmail = ? WHERE id = ?",
+            [getConfirmEmail, userID]
+        );
+        return result.affectedRows > 0;
+    }catch(error){
+        console.error("Error updating email preference:", error);
+        return false;
+    }
+}
 
+/**
+ * Retrieves user settings
+ * @param {number} userID - The ID of the user.
+ */
+const getUserSettings = async (userID) => {
+    try {
+        const [settings] = await pool.query(
+            `SELECT id, getConfirmEmail 
+             FROM Users  
+             WHERE id = ? `,
+            [userID]
+        );
 
-module.exports = { saveUserPreferences, getUserPreferences,deletePreference };
+        return settings[0];
+    } catch (error) {
+        console.error("❌ Error fetching user settings:", error);
+        return false;
+    }
+};
+module.exports = { saveUserPreferences, getUserPreferences,deletePreference,updateConfirmEmailPreference,getUserSettings };

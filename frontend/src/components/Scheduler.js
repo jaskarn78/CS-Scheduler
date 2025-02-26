@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { getUpcomingClasses, getBookingSpot, reserveSpot, addToWaitList } from "../api";
 import { classIcons, getClassCategory } from "../utils/classIconUtils";
-
+import { Calendar, ChevronLeft, ChevronRight, Clock, User } from 'lucide-react';
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 
 const UpcomingClassesPage = () => {
-    const [selectedDate, setSelectedDate] = useState("");
+    // Initialize selectedDate with today's date in YYYY-MM-DD format
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [classes, setClasses] = useState([]);
     const [filteredClasses, setFilteredClasses] = useState([]);
     const [error, setError] = useState("");
@@ -12,13 +15,32 @@ const UpcomingClassesPage = () => {
     const [modalContent, setModalContent] = useState(null);
     const [availableSpots, setAvailableSpots] = useState([]);
     const [selectedSpot, setSelectedSpot] = useState("");
-    const [selectedClassType, setSelectedClassType] = useState("All");
+    const [selectedClassType, setSelectedClassType] = useState("All"); // Class type filter
+    const [selectedTimeFilter, setSelectedTimeFilter] = useState("All"); // Time filter
 
+    // Fetch classes when selectedDate changes or on component mount
     useEffect(() => {
-        setFilteredClasses(
-            selectedClassType === "All" ? classes : classes.filter((cls) => cls.className === selectedClassType)
-        );
-    }, [selectedClassType, classes]);
+        fetchClasses();
+    }, [selectedDate]);
+
+    // Filter classes based on selectedClassType and selectedTimeFilter
+    useEffect(() => {
+        let filtered = selectedClassType === "All" ? classes : classes.filter((cls) => cls.className === selectedClassType);
+
+        // Apply time filter
+        if (selectedTimeFilter !== "All") {
+            filtered = filtered.filter((cls) => {
+                const classTime = new Date(cls.START_TIME).getHours();
+                console.log(classTime, selectedTimeFilter);
+                if (selectedTimeFilter === "Morning" && classTime >= 5 && classTime < 12) return true;
+                if (selectedTimeFilter === "Afternoon" && classTime >= 12 && classTime < 17) return true;
+                if (selectedTimeFilter === "Evening" && classTime >= 17 && classTime < 24) return true;
+                return false;
+            });
+        }
+
+        setFilteredClasses(filtered);
+    }, [selectedClassType, classes, selectedTimeFilter]);
 
     const handleDateChange = (event) => setSelectedDate(event.target.value);
 
@@ -35,6 +57,30 @@ const UpcomingClassesPage = () => {
             setError("An error occurred while fetching classes.");
             console.error(err);
         }
+    };
+
+    // Handle previous day navigation
+    const handlePreviousDay = () => {
+        const currentDate = new Date(selectedDate);
+        currentDate.setDate(currentDate.getDate() - 1); // Subtract one day
+        setSelectedDate(currentDate.toISOString().split('T')[0]); // Update selectedDate
+    };
+
+    // Handle next day navigation
+    const handleNextDay = () => {
+        const currentDate = new Date(selectedDate);
+        currentDate.setDate(currentDate.getDate() + 1); // Add one day
+        setSelectedDate(currentDate.toISOString().split('T')[0]); // Update selectedDate
+    };
+
+    // Handle time filter selection
+    const handleTimeFilter = (time) => {
+        setSelectedTimeFilter(time);
+    };
+
+    // Handle class type filter selection
+    const handleClassTypeFilter = (classType) => {
+        setSelectedClassType(classType);
     };
 
     const handleCardClick = async (classItem) => {
@@ -123,91 +169,179 @@ const UpcomingClassesPage = () => {
     };
 
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <h1 className="text-center text-3xl font-semibold text-gray-900">Upcoming Classes</h1>
+        <div className="min-h-screen bg-gray-50">
+            {/* Date Selector */}
+            <div className="p-4 bg-white border-b">
+                <div className="flex items-center justify-between mb-2">
+                    <button
+                        onClick={handlePreviousDay}
+                        className="p-2 hover:bg-gray-100 rounded-full appearance-none"
+                    >
+                        <ChevronLeft className="w-5 h-5 text-gray-600" />
+                    </button>
+                    <div className="flex items-center space-x-2">
+                        <Calendar className="w-5 h-5 text-gray-600" />
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={handleDateChange}
+                            className="font-medium bg-transparent"
+                        />
+                    </div>
+                    <button
+                        onClick={handleNextDay}
+                        className="p-2 hover:bg-gray-100 rounded-full appearance-none"
+                    >
+                        <ChevronRight className="w-5 h-5 text-gray-600" />
+                    </button>
+                </div>
 
-            <div className="flex flex-wrap gap-4 mt-6 justify-center">
-                <input type="date" value={selectedDate} onChange={handleDateChange} className="border p-3 rounded-lg w-48" />
-                <button
-                    onClick={fetchClasses}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
-                    disabled={!selectedDate}
-                >
-                    Get Classes
-                </button>
-                <select
-                    className="border p-3 rounded-lg"
-                    value={selectedClassType}
-                    onChange={(e) => setSelectedClassType(e.target.value)}
-                >
-                    <option value="All">All Classes</option>
-                    {[...new Set(classes.map((cls) => cls.className))].map((className) => (
-                        <option key={className} value={className}>
-                            {className}
-                        </option>
-                    ))}
-                </select>
+                {/* Time slots quick select */}
+                <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+                    <button
+                        onClick={() => handleTimeFilter("Morning")}
+                        className={`px-4 py-2 rounded-full text-sm whitespace-nowrap appearance-none ${
+                            selectedTimeFilter === "Morning"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                    >
+                        Morning
+                    </button>
+                    <button
+                        onClick={() => handleTimeFilter("Afternoon")}
+                        className={`px-4 py-2 rounded-full text-sm whitespace-nowrap appearance-none ${
+                            selectedTimeFilter === "Afternoon"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                    >
+                        Afternoon
+                    </button>
+                    <button
+                        onClick={() => handleTimeFilter("Evening")}
+                        className={`px-4 py-2 rounded-full text-sm whitespace-nowrap appearance-none ${
+                            selectedTimeFilter === "Evening"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                    >
+                        Evening
+                    </button>
+                    <button
+                        onClick={() => handleTimeFilter("All")}
+                        className={`px-4 py-2 rounded-full text-sm whitespace-nowrap appearance-none ${
+                            selectedTimeFilter === "All"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                    >
+                        All
+                    </button>
+                </div>
+
+                {/* Class type filter */}
+                <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700">Filter by Class Type</label>
+                    <select
+                        value={selectedClassType}
+                        onChange={(e) => handleClassTypeFilter(e.target.value)}
+                        className="w-full border p-2 rounded-lg mt-1 text-sm"
+                    >
+                        <option value="All">All Classes</option>
+                        <option value="CS4">CS4</option>
+                        <option value="Box">Box</option>
+                        <option value="Ride">Ride</option>
+                        <option value="Reform">Reform</option>
+                        <option value="Yoga Restore">Yoga Restore</option>
+                        <option value="Yoga Flow">Yoga Flow</option>
+                        <option value="Hot Pilates">Hot Pilates</option>
+                    </select>
+                </div>
             </div>
 
-            {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
-
-            <div className="mt-6 space-y-4">
+            {/* Class Listings */}
+            <div className="p-4 space-y-4">
                 {filteredClasses.length > 0 ? (
                     filteredClasses.map((classItem) => {
                         const classCategory = getClassCategory(classItem.className);
                         const classIcon = classIcons[classCategory];
-
+                        const classTimeParts = classItem.START_TIME.split(" ");
+                        const classDatePart = classTimeParts[0];
+                        const classTimePart = classTimeParts[1] + " "+ classTimeParts[2];
+                        if(classItem.classStatusDesc === "In the past"){
+                            return null;
+                        }
+                     
                         return (
-                            <div
-                                key={classItem.CLASS_SCHEDULES_ID}
-                                className="border rounded-lg p-4 shadow-md bg-white cursor-pointer hover:shadow-lg transition"
-                            >
-                                {/* Class Name with Icon */}
-                                <div className="flex items-center gap-3">
-                                    {classIcon}
-                                    <h2 className="text-xl font-semibold text-gray-800">{classItem.className}</h2>
-                                </div>
-                                <p className="text-gray-600"><strong>Instructor:</strong> {classItem.InstructorName}</p>
-                                <p className="text-gray-600"><strong>Class Time:</strong> {classItem.START_TIME}</p>
-                                <p className="text-gray-600"><strong>Status:</strong> {classItem.classStatusLabel === "Book" ? "Open" : classItem.classStatusLabel}</p>
-
-                                <div className="flex flex-wrap gap-3 mt-4">
-                                    {classItem.classStatusLabel === "Edit" ? (
-                                        <button className="bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed">
-                                            Already Scheduled
-                                        </button>
-                                    ) : classItem.classStatusLabel.includes("Waitlist") ? (
-                                        <button
-                                            onClick={() => handleCardClick(classItem)}
-                                            className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition"
-                                        >
-                                            Join Waitlist
-                                        </button>
-                                    ) : classItem.classStatusLabel === "Book" ? (
-                                        <button
-                                            onClick={() => handleCardClick(classItem)}
-                                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
-                                        >
-                                            Book Now
-                                        </button>
-                                    ) : (
-                                        <button onClick={()=> handleCardClick(classItem)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                                           Prepare to book
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
+                            <Card key={classItem.CLASS_SCHEDULES_ID} className="bg-white" variant="outlined" elevation={0} >
+                                <CardContent className="p-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex space-x-3">
+                                            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-50">
+                                                {classIcon}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-medium">{classItem.className}</h3>
+                                                <p className="text-sm text-gray-500">with {classItem.InstructorName}</p>
+                                                <div className="flex items-center mt-2 text-sm text-gray-600">
+                                                    <Calendar className="w-4 h-4 mr-1" />
+                                                    <span>{classDatePart}</span>
+                                                </div>
+                                                <div className="flex items-center mt-2 text-sm text-gray-600">
+                                                    <Clock className="w-4 h-4 mr-1" />
+                                                    <span>{classTimePart}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-sm text-emerald-600">{classItem.classStatusLabel === "Book" ? "Open" : classItem.classStatusLabel}</span>
+                                            {classItem.classStatusLabel === "Edit" ? (
+                                                <button className="mt-2 px-4 py-2 bg-gray-400 text-white rounded-lg text-sm w-full cursor-not-allowed appearance-none">
+                                                    Scheduled
+                                                </button>
+                                            ) : classItem.classStatusLabel.includes("Waitlist") ? (
+                                                <button
+                                                    style={{ width: "85%" }}
+                                                    onClick={() => handleCardClick(classItem)}
+                                                    className="mt-2 px-4 py-2 bg-amber-100 text-amber-900 rounded-lg text-sm hover:bg-amber-200 transition-colors appearance-none"
+                                                >
+                                                    Join Waitlist
+                                                </button>
+                                            ) : classItem.classStatusLabel === "Book" ? (
+                                                <button
+                                                    onClick={() => handleCardClick(classItem)}
+                                                    className="mt-2 px-4 py-2 bg-emerald-100 text-emerald-900 rounded-lg text-sm w-full hover:bg-emerald-600 appearance-none"
+                                                >
+                                                    Book Now
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleCardClick(classItem)}
+                                                    className="mt-2 px-4 py-2 bg-gray-200 text-white rounded-lg text-sm cursor-not-allowed appearance-none"
+                                                >
+                                                    {classItem.classStatusDesc}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         );
                     })
                 ) : (
-                    <p className="text-center text-gray-500">No classes available for the selected date.</p>
+                    <div className="text-center py-8 text-gray-500">
+                        <p>No classes available for the selected date and filters.</p>
+                        <button className="mt-4 text-gray-800 font-medium appearance-none">
+                            View Different Date
+                        </button>
+                    </div>
                 )}
             </div>
 
             {isModalOpen && modalContent && (
                 <div className="fixed inset-0 bg-black bg-opacity-25 flex justify-center items-center">
                     <div className="bg-white p-6 rounded-lg w-96 shadow-xl">
-                        {/* Modal Header with Icon */}
                         <div className="flex items-center gap-3">
                             {classIcons[getClassCategory(modalContent.classType)]}
                             <h2 className="text-2xl font-bold text-gray-800">{modalContent.classType}</h2>
@@ -234,13 +368,15 @@ const UpcomingClassesPage = () => {
                         )}
 
                         <div className="flex justify-between mt-6">
-                            <button onClick={closeModal} className="bg-red-500 text-white px-4 py-2 rounded-lg">Close</button>
+                            <button onClick={closeModal} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 appearance-none">
+                                Close
+                            </button>
                             {modalContent.waitlisted ? (
-                                <button onClick={handleAddToWaitlist} className="bg-yellow-500 text-white px-4 py-2 rounded-lg">
+                                <button onClick={handleAddToWaitlist} className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors appearance-none">
                                     Waitlist
                                 </button>
                             ) : (
-                                <button onClick={handleBookClass} className="bg-green-500 text-white px-4 py-2 rounded-lg">
+                                <button onClick={handleBookClass} className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors appearance-none">
                                     Book
                                 </button>
                             )}

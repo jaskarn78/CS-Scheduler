@@ -3,7 +3,7 @@ const {convertTo12HourFormat} = require("../utils/dateTimeUtils");
 const classIcons = (env)=>{
     const baseURL = env === "development"
     ? 'http://192.168.7.200:3000/images'
-    : 'https://cs.jjagpal.me/images';
+    : 'https://clubsync.app/images';
     return {
         "RIDE": `<img src="${baseURL}/stationary-bike.png" alt="Ride" style='width:1.5rem; height:1.5rem;' class="w-10 h-10 text-gray-700" />`,
         "BOX": `<img src="${baseURL}/boxing-gloves.png" alt="Box" style='width:1.5rem; height:1.5rem;' class="w-10 h-10 text-gray-700" />`,
@@ -38,7 +38,7 @@ const generateEmailTemplate = (firstName, lastName, className, classTime, status
     const icons = classIcons(env);
     const classCategory = getClassCategory(className.toUpperCase());
     const classIcon = icons[classCategory.toUpperCase()] || "🏋️"; // Default emoji if no icon is found
-    const logo = `<img src="${env === "development" ? "http://192.168.7.200:3000/images/cs-logo.png" : "https://cs.jjagpal.me/images/cs-logo.png"}" alt="Club Studio Logo" width="80">`;
+    const logo = `<img src="${env === "development" ? "http://192.168.7.200:3000/images/cs-logo.png" : "https://clubsync.app/images/cs-logo.png"}" alt="Club Studio Logo" width="80">`;
     const dateTimeParts = classTime.split(" ");
     const date = dateTimeParts[0];
     const time = dateTimeParts[1];
@@ -69,7 +69,7 @@ const generateEmailTemplate = (firstName, lastName, className, classTime, status
             <p style="font-size: 14px; margin-top: 20px;">If this was not expected, please check your preferences in the scheduler app.</p>
 
             <div style="text-align: center; margin-top: 20px;">
-                <a href="https://cs.jjagpal.me" style="display: inline-block; padding: 10px 20px; background-color: rgba(0, 0, 0, 0.9); color: white; text-decoration: none; border-radius: 5px;">
+                <a href="https://clubsync.app" style="display: inline-block; padding: 10px 20px; background-color: rgba(0, 0, 0, 0.9); color: white; text-decoration: none; border-radius: 5px;">
                     View My Schedule
                 </a>
             </div>

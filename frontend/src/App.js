@@ -6,7 +6,7 @@ import UpcomingClassesPage from "./components/Scheduler";
 import Navbar from "./components/Navbar";
 import LoginPage from "./components/LoginPage";
 import Preferences from "./components/Preferences";
-
+import './index.css';
 function App() {
     const [token, setToken] = useState(localStorage.getItem("token") || null);
     const [authHeader, setAuthHeader] = useState(localStorage.getItem("authHeader") || null);

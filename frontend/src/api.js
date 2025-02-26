@@ -192,6 +192,26 @@ export const deleteUserPreference = async (preferenceId, className, classTime) =
     });
     return response.json();
 };
+export const getUserSettings = async () => {
+    const response = await fetch(`/api/preferences/getSettings`,{
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userID: localStorage.getItem("userID") }),
+    });
+    return response.json();
+};
+export const updateEmailPreference = async (getConfirmEmailVal) => {
+    const response = await fetch("/api/preferences/updateEmailPreference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            userID: localStorage.getItem("userID"),
+            getConfirmEmail: getConfirmEmailVal
+        }),
+    });
+    return response.json();
+};
+
 
 export const getAvailableClassTimes = async(className, days)=>{
     const response = await fetch(`/api/classes/getAvailableClassTimes`, {
