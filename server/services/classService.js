@@ -1,7 +1,7 @@
 // services/classService.js
 const axios = require("axios");
 const { API_BASE_URL, CLIENT, CLUB_ID } = require("../config/config");
-const { authenticate, generateAuthorizationHeader } = require("./authService");
+const { logger } = require("../utils/logger");
 
 let authToken = null;
 let authHeader = null;
@@ -24,6 +24,8 @@ const callLAFitnessAPI = async (endpoint, data) => {
             },
             decompress: true
         });
+       
+
         return response.data;
     } catch (error) {
        

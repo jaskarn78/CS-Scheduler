@@ -26,9 +26,9 @@
 .bg-emerald-200 { background-color: var(--emerald-200); }
 .bg-emerald-300 { background-color: var(--emerald-300); }
 .bg-emerald-400 { background-color: var(--emerald-400); }
-/* .bg-emerald-500 { background-color: var(--emerald-500); } */
+.bg-emerald-500 { background-color: var(--emerald-500); }
 
-.bg-emerald-500 { background-color: #4f46e5; }
+/* .bg-emerald-500 { background-color: #4f46e5; } */
 
 .bg-emerald-600 { background-color: var(--emerald-600); }
 .bg-emerald-700 { background-color: var(--emerald-700); }
@@ -118,6 +118,6 @@ li {
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
 }
 button.py-2.border.rounded-lg.text-sm.bg-gray-100.text-gray-700.hover\:bg-emerald-600.hover\:text-white.transition-colors:hover {
-  background-color: var(--primary-color);
+  background-color: var(--bg-emerald-500);
   color: var(--text-light);
 }

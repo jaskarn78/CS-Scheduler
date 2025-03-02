@@ -7,8 +7,8 @@ const { API_BASE_URL, CLIENT } = require("../config/config");
 /**
  * Generates Authorization Header for API requests.
  */
-const generateAuthorizationHeader = (username, password) => {
-    return `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
+const generateAuthorizationHeader = async(username, password) => {
+    return await`Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
 };
 
 /**
@@ -36,7 +36,6 @@ const authenticate = async (credentials) => {
                 "user-agent": "ClubStudio/1.3.6 (iPhone; iOS 18.3; Scale/3.00)"
             }
         });
-
         if (!response.data.Success) {
             logger.error(`❌ Authentication failed for ${username}: ${response.data.Message}`);
             return null;
@@ -47,13 +46,13 @@ const authenticate = async (credentials) => {
 
         // 🔍 Check if the user exists in the database
         const [existingUser] = await pool.query("SELECT id, barcode, email, first_name, last_name, mobile FROM Users WHERE username = ?", [username]);
-
         let userID;
         let barcode = null;
-
+        
         if (existingUser.length === 0) {
             // 🛑 User does not exist → Fetch Full Profile from API
             logger.info(`🆕 New user detected (${username}) – Fetching full profile...`);
+
             const profileData = await fetchAndSaveUserProfile(authToken, username, password);
             if (!profileData) {
                 logger.error(`❌ Failed to fetch profile data for ${username}.`);
@@ -92,13 +91,12 @@ const authenticate = async (credentials) => {
  */
 const fetchAndSaveUserProfile = async (token, username, password, existingUserID = null) => {
     try {
-        // 🔄 Fetch user profile
         const profileData = await callLAFitnessAPI("GetCustomerProfile", {
             request: { Client: CLIENT },
             token: token,
-            authHeader: generateAuthorizationHeader(username, password)
+            authHeader: await generateAuthorizationHeader(username, password)
         });
-
+        // ✅ Profile data fetched successfully (Success and Value are tru
         if (!profileData.Success || !profileData.Value) {
             logger.error(`❌ Failed to fetch profile for ${username}`);
             return null;

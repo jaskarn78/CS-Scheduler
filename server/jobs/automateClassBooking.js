@@ -124,16 +124,16 @@ const automateClassBooking = async (className, classTime, classDay, inputDate = 
             logger.info(`📌 Spot selected for booking: ${selectedSpot.Text}`);
 
             // Skip reservation in development environment
-            if (env === "development") {
-                logger.info("Skipping reservation in development environment");
-                logger.info({
-                    userID: user_id,
-                    class: targetClass.CLASS_SCHEDULES_ID,
-                    spot: selectedSpot.Id,
-                    time: targetClass.START_TIME,
-                });
-                return;
-            }
+            // if (env === "development") {
+            //     logger.info("Skipping reservation in development environment");
+            //     logger.info({
+            //         userID: user_id,
+            //         class: targetClass.CLASS_SCHEDULES_ID,
+            //         spot: selectedSpot.Id,
+            //         time: targetClass.START_TIME,
+            //     });
+            //     return;
+            // }
 
             // Attempt to reserve the class
             const reservationResponse = await reserveSpot(
@@ -167,7 +167,7 @@ const automateClassBooking = async (className, classTime, classDay, inputDate = 
                 sendAppriseNotification(notificationMessage);
 
                 // Generate the HTML email content
-                const htmlEmail = generateEmailTemplate(first_name, last_name, className, targetClass.START_TIME, bookingConfirmed ? "Success" : "Failed", Value.SpotDisplayNumber);
+                const htmlEmail = generateEmailTemplate(first_name, last_name, className, targetClass.START_TIME, bookingConfirmed ? "Success" : "Failed", Value.SpotDisplayNumber, targetClass.InstructorName);
 
                 // Send the email
                 if (email && getConfirmEmail) {
@@ -182,7 +182,7 @@ const automateClassBooking = async (className, classTime, classDay, inputDate = 
                 failureMessage += `🚫 Reason: ${reservationResponse?.Message || "Unknown error occurred"}`;
 
                 // Generate HTML email for failure
-                const failureHtmlEmail = generateEmailTemplate(first_name, last_name, className, targetClass.START_TIME, failureMessage);
+                const failureHtmlEmail = generateEmailTemplate(first_name, last_name, className, targetClass.START_TIME, failureMessage, "N/A", targetClass.InstructorName);
                 if (email && getConfirmEmail) {
                     sendEmailNotification(email, "Class Booking Failed", failureMessage, failureHtmlEmail);
                 }
@@ -194,5 +194,9 @@ const automateClassBooking = async (className, classTime, classDay, inputDate = 
         logger.error("❌ Error during class booking automation:", error);
     }
 };
-
+// const className="CS4";
+// const classTime="7:30:00 AM";
+// const classDay="Thu";
+// const inputDate="2025-03-06";
+// automateClassBooking(className, classTime, classDay, inputDate);
 module.exports = automateClassBooking;

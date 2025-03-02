@@ -6,3 +6,7 @@ index-old.js
 cs-sessions.chlz
 server/db/mobileclubdb.db
 logs
+server/db/mobileclubdb.zip
+server/db/mobileclubdb.zip
+server/db/mobileclubdb.db-shm
+server/db/mobileclubdb.db-wal

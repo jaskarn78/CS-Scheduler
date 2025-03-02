@@ -4,7 +4,6 @@ const router = express.Router();
 
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
-
   if (!username || !password) {
     return res.status(400).json({ success: false, message: "Missing credentials" });
   }
@@ -12,7 +11,6 @@ router.post("/login", async (req, res) => {
   try {
     // Temporarily overwrite credentials for authentication
     const response = await authenticate({ username, password });
-
     if (response) {
       console.log(`Username: ${username}`, `Password: ${password}`);
       return res.status(200).json({ success: true, token: response.authToken, userID: response.userID, barcode: response.barcode });

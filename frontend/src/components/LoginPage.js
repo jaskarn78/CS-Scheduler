@@ -92,7 +92,9 @@ const LoginPage = ({ onLoginSuccess }) => {
             Sign In
           </button>
         </form>
-        
+        <p className="signup-prompt">
+         Juse use your Club Studio credentials to login
+        </p>
         <p className="signup-prompt">
           Don't have an account? <a href="">Too Bad :)</a>
         </p>
