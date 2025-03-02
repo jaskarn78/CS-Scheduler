@@ -104,7 +104,7 @@ The system consists of a **React.js frontend** and a **Node.js backend** with **
 ### **Class Reservations**
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/classes/classes-by-club` | POST | Retrieves upcoming classes |
+| `/api/classes/classesByClub` | POST | Retrieves upcoming classes |
 | `/api/classes/reservations` | POST | Fetches current reservations |
 | `/api/booking/reserve-class` | POST | Reserves a spot in a class |
 | `/api/booking/addToWaitList` | POST | Adds a user to a waitlist |

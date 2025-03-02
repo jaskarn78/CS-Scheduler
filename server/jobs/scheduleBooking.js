@@ -2,8 +2,9 @@ const schedule = require("node-schedule");
 const dayjs = require("dayjs");
 const pool = require("../db/mysql");
 const automateClassBooking = require("./automateClassBooking");
+const { logger } = require("../utils/logger");
 
-console.log("🔄 Setting up dynamic class booking automation...");
+logger.info("🔄 Setting up dynamic class booking automation...");
 
 /**
  * Maps weekday names to `node-schedule` indexes.
@@ -22,11 +23,11 @@ const scheduleBookings = async () => {
         const [preferences] = await pool.query("SELECT DISTINCT className, classTime, classDay FROM UserPreferences");
 
         if (preferences.length === 0) {
-            console.log("📅 No class preferences found.");
+            logger.info("📅 No class preferences found.");
             return;
         }
 
-        console.log(`📅 Found ${preferences.length} unique class preferences`);
+        logger.info(`📅 Found ${preferences.length} unique class preferences`);
 
         preferences.forEach(({ className, classTime, classDay }) => {
             // Convert stored class time and add 1 hour for booking time
@@ -35,7 +36,7 @@ const scheduleBookings = async () => {
 
 
             if (!parsedTime.isValid()) {
-                console.error(`❌ Invalid classTime detected: ${classTime}`);
+                logger.error(`❌ Invalid classTime detected: ${classTime}`);
                 return;
             }
             const bookingTime = dayjs(parsedTime, "HH:mm:ss").add(1, "hour");
@@ -45,23 +46,23 @@ const scheduleBookings = async () => {
             // Get mapped day index
             const scheduledDay = dayMapping[classDay];
             if (scheduledDay === undefined) {
-                console.error(`❌ Invalid day detected: ${classDay}`);
+                logger.error(`❌ Invalid day detected: ${classDay}`);
                 return;
             }
 
-            console.log(`⏳ Scheduling ${className} booking on ${classDay} at ${bookingHour}:${bookingMinute}`);
+            logger.info(`⏳ Scheduling ${className} booking on ${classDay} at ${bookingHour}:${bookingMinute}`);
           
             // Schedule the job exactly 7 days in advance
             schedule.scheduleJob(
                 { hour: bookingHour, minute: bookingMinute, dayOfWeek: scheduledDay },
                 () => {
-                    console.log(`📅 Running automated booking for ${className} at ${classTime} (7 days ahead)`);
+                    logger.info(`📅 Running automated booking for ${className} at ${classTime} (7 days ahead)`);
                     automateClassBooking(className, classTime, classDay);
                 }
             );
         });
     } catch (error) {
-        console.error("❌ Error scheduling class bookings:", error);
+        logger.error("❌ Error scheduling class bookings:", error);
     }
 };
 

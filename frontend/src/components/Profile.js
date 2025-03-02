@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronDown } from "lucide-react";
 import { getUserProfile } from "../api";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 
 const Profile = () => {
     const [profile, setProfile] = useState(null);
+    const [isProfileExpanded, setIsProfileExpanded] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -41,30 +45,48 @@ const Profile = () => {
     }
 
     return (
-        <div className="max-w-3xl mx-auto mt-10 p-6 bg-white rounded-lg">
-            <div className="text-center">
-                <h2 className="text-2xl font-semibold text-gray-900">
-                    {profile.FirstName} {profile.LastName}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">{profile.Email}</p>
+        <div className="px-4 py-3 my-4 bg-white border-b">
+            {/* Profile Quick View */}
+            <div
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => setIsProfileExpanded(!isProfileExpanded)}
+            >
+                <div>
+                    <p className="font-medium">
+                        {profile.FirstName} {profile.LastName}
+                    </p>
+                    <p className="text-sm text-gray-500">{profile.homeClub}</p>
+                </div>
+                <ChevronDown
+                    className={`w-5 h-5 text-gray-500 transition-transform ${
+                        isProfileExpanded ? "rotate-180" : ""
+                    }`}
+                />
             </div>
 
-            <div className="mt-6 space-y-4">
-                <div className="flex justify-between border-b pb-2">
-                    <span className="text-gray-600">Home Club:</span>
-                    <span className="font-medium">{profile.homeClub}</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
-                    <span className="text-gray-600">Member Since:</span>
-                    <span className="font-medium">{profile.JoinDate}</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
-                    <span className="text-gray-600">Status:</span>
-                    <span className={`font-medium ${profile.CurrentStatus === 1 ? "text-green-600" : "text-red-500"}`}>
-                        {profile.CurrentStatus === 1 ? "Active" : "Inactive"}
-                    </span>
-                </div>
-            </div>
+            {/* Expanded Profile Details */}
+            {isProfileExpanded && (
+                <Card variant="outlined" elevation={0} className="mt-3 pt-3 border-t border-gray-200 rounded-lg shadow-none">
+                    <CardContent className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p className="text-gray-500">Member Since</p>
+                            <p className="font-medium">{profile.JoinDate}</p>
+                        </div>
+                        <div>
+                            <p className="text-gray-500">Status</p>
+                            <span
+                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    profile.CurrentStatus === 1
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-red-100 text-red-800"
+                                }`}
+                            >
+                                {profile.CurrentStatus === 1 ? "Active" : "Inactive"}
+                            </span>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 };

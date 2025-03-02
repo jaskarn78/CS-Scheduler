@@ -78,7 +78,7 @@ async function fetchClasses(userId, startDate) {
     const authHeader = generateAuthHeader(user.username, user.password);
 
     const response = await axios.post(
-      `${API_BASE_URL}/classes/classes-by-club`,
+      `${API_BASE_URL}/classes/classesByClub`,
       {
         token: token,
         authHeader: authHeader,

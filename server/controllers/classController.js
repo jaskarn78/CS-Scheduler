@@ -2,6 +2,7 @@ const { callLAFitnessAPI } = require("../services/classService");
 const { CLIENT, CLUB_ID } = require("../config/config");
 const db = require('../db/sqlite');
 const { formatDate } = require("../utils/dateTimeUtils");
+const { logger } = require("../utils/logger");
 
 
 // Convert startDate to MM/DD/YYYY format
@@ -104,7 +105,7 @@ const getClassesByClub = async (req, res) => {
                     LEFT JOIN InstructorInfo if on if.InstructorId = cs.INSTRUCTOR_ID 
                     LEFT JOIN BrandedClass bc on bc.CLASSES_ID=cl2.CLASSES_ID 
                     LEFT JOIN ClassScheduleStatus css on css.StatusId = ? 
-                    WHERE cs.CLASS_SCHEDULES_ID=? and ClassDate LIKE '${formattedDate}%';`,
+                    WHERE cs.CLASS_SCHEDULES_ID=? and ClassDate LIKE '${formattedDate}%' ${classFilter};`,
                     [statusID,classID]
                 );
                 
@@ -127,4 +128,58 @@ const getClassesByClub = async (req, res) => {
     }
 };
 
-module.exports = { getFutureClassReservations, getClassesByClub };
+const getClassesByTypeAndDays = async (req, res) => {
+    const { className, days } = req.body;
+
+    try {
+        if (!className || !days || days.length === 0) {
+            return res.status(400).json({ error: "Invalid class name or days selection" });
+        }
+
+        // Ensure days is an array before querying
+        const dayIds = Array.isArray(days) ? days : days.split(",").map(Number);
+
+        const response = { Value: [], Success: true };
+
+        const query = `
+            WITH ClassTimes AS (
+                SELECT 
+                    cl2.NAME AS className, 
+                    cs.DAY_ID,
+                    strftime('%I:%M %p', cs.StartTime, 'unixepoch') AS StartTime, 
+                    strftime('%H:%M:%S', cs.StartTime, 'unixepoch') AS StartTime24
+                FROM ClassSchedule2 cs
+                LEFT JOIN Class2 cl2 ON cl2.CLASSES_ID = cs.CLASSES_ID
+                WHERE cs.club_id = ?
+                AND cl2.NAME = ?
+                AND DAY_ID IN (${dayIds.map(() => "?").join(",")})  -- Dynamically generate placeholders
+            )
+            SELECT 
+                StartTime
+            FROM ClassTimes
+            WHERE StartTime24 IN (
+                SELECT StartTime24
+                FROM ClassTimes
+                GROUP BY StartTime24
+                HAVING COUNT(DISTINCT DAY_ID) = ?
+            )
+            GROUP BY StartTime, className
+            ORDER BY StartTime24 ASC;
+        `;
+
+        const params = [CLUB_ID, className, ...dayIds, dayIds.length];
+        const result = await db.query(query, params);
+        if (result.length > 0) {
+            response.Value = result;
+        } else {
+            response["message"] = `No available times found for ${className} for the given days. Please try different days or check back later.`;
+        }
+
+        res.json(response);
+    } catch (error) {
+        console.error("❌ Error fetching classes by type and day:", error);
+        res.status(500).json({ error: "Failed to fetch classes by type and day." });
+    }
+};
+
+module.exports = { getFutureClassReservations, getClassesByClub,getClassesByTypeAndDays };

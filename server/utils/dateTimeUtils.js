@@ -73,10 +73,50 @@ const formatDate = (dateString, format = "MM/DD/YYYY", padStart = true, includeT
     return includeTime ? `${formattedDate} ${timePart}`.trim() : formattedDate;
 };
 const convertTo12HourFormat = (timeStr) => {
+    if(timeStr.includes("AM") || timeStr.includes("PM")) {
+        return timeStr;
+    }
     const [hour, minute, second] = timeStr.split(":").map(Number);
     const period = hour >= 12 ? "PM" : "AM";
     const formattedHour = hour % 12 === 0 ? 12 : hour % 12; // Convert 0 or 12 to 12
 
     return `${formattedHour}:${minute.toString().padStart(2, "0")}:${second.toString().padStart(2, "0")} ${period}`;
 };
-module.exports = { formatDate, convertTo12HourFormat };
+
+const convertTo24HourFormat = (timeStr) => {
+    if (!timeStr || typeof timeStr !== "string") {
+        console.error("Invalid time string:", timeStr);
+        return null; // Return null to indicate an invalid input
+    }
+
+    const timeParts = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s?(AM|PM)?$/i);
+
+    if (!timeParts) {
+        console.error("Invalid time format:", timeStr);
+        return null; // Return null for invalid format
+    }
+
+    let [, hour, minute, second = "00", period] = timeParts;
+    hour = parseInt(hour, 10);
+    minute = parseInt(minute, 10);
+    second = parseInt(second, 10);
+
+    if (period) {
+        // Convert PM to 24-hour format (except for 12 PM which stays the same)
+        if (period.toUpperCase() === "PM" && hour !== 12) {
+            hour += 12;
+        }
+        // Convert 12 AM to 00 hours (midnight)
+        if (period.toUpperCase() === "AM" && hour === 12) {
+            hour = 0;
+        }
+    }
+
+    // Ensure all values are two-digit formatted
+    const formattedHour = hour.toString().padStart(2, "0");
+    const formattedMinute = minute.toString().padStart(2, "0");
+    const formattedSecond = second.toString().padStart(2, "0");
+
+    return `${formattedHour}:${formattedMinute}:${formattedSecond}`;
+};
+module.exports = { formatDate, convertTo12HourFormat, convertTo24HourFormat };
